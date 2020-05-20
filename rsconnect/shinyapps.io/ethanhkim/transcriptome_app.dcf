@@ -1,0 +1,10 @@
+name: transcriptome_app
+title:
+username:
+account: ethanhkim
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2325091
+bundleId: 3167368
+url: https://ethanhkim.shinyapps.io/transcriptome_app/
+when: 1589912180.73365

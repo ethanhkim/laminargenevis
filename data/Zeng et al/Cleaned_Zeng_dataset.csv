@@ -1,0 +1,1089 @@
+gene_symbol,Cortical.marker..human.,Expression.level
+A2M,vascular endothelial cell,+++++
+AANAT,NA,++
+AATF,NA,++
+ABAT,interneuron,+++++
+ABAT,others,+++++
+ABCD1,NA,++
+ACAN,NA,+
+ASIC2,NA,++
+ACE,NA,+
+ACHE,NA,++++
+ACTB,NA,+++++
+ACTN2,NA,+++
+ADAM23,NA,+++++
+ADAMTS8,NA,++
+ADAMTSL5,NA,+
+ADCY1,NA,+++
+ADCY2,NA,+++
+ADCYAP1,NA,++
+ADM,interneuron,++++
+ADM,vascular endothelial cell,++++
+ADORA1,NA,+++
+ADORA2A,NA,++
+ADORA3,NA,-
+ADRA1A,NA,+++++
+ADRA1D,NA,+
+ADRA2A,layer 6,+++
+ADRA2B,NA,+
+ADRB2,NA,+
+GRK2,NA,+++
+GRK3,NA,++++
+AFAP1,NA,+++
+AGAP1,NA,++++
+AGRN,NA,+++++
+AGTR1,NA,-
+AGTR2,NA,-
+AHI1,NA,++++
+AKR1C2,layer 6,++++
+AKR1C3,layer 6,++
+AKT1,NA,++++
+ALDH5A1,NA,+++
+ALDOC,NA,+++++
+AMMECR1,NA,+
+AMPH,NA,++++
+ANKHD1,NA,+++
+ANKRD34B,NA,-
+ANXA1,layer 6,++++
+APBA1,NA,+++
+APBB2,NA,+++
+APLNR,NA,+++++
+APLP1,NA,+++++
+APLP2,NA,+++++
+APOC1,NA,+
+APOL1,NA,+++
+APOL2,NA,+++
+APOL4,NA,-
+APP,NA,+++++
+ARC,NA,+++++
+ARFGEF2,NA,+++
+ARHGEF10,NA,++
+ARHGEF6,NA,++
+ARHGEF9,NA,+++
+ARL4C,NA,+++++
+ARNTL2,NA,+++
+ASL,NA,+++
+ASPM,NA,-
+ZFHX3,NA,+
+ATF4,NA,+++++
+ATF5,NA,+++++
+ATF7IP,NA,+++
+ATP10A,NA,+++
+ATP1A2,astrocyte,++++
+ATP1A3,NA,+++++
+ATP2A2,NA,+++++
+ATP2B4,layer 2,+++
+ATP2B4,layer 3,+++
+ATP2B4,layer 6,+++
+ATP6AP2,NA,+++
+ATP8B1,NA,++++
+ATR,NA,++
+ATRX,NA,+++
+AUTS2,NA,++
+AVPR1A,NA,-
+AVPR1B,NA,+
+AVPR2,NA,+
+B3GALT2,layer 5,++++
+B3GALT2,layer 6,++++
+BACE2,NA,+++
+BAD,NA,++
+BAX,NA,++
+BCAN,astrocyte,++++
+BCHE,NA,+
+BCL2,NA,+
+BCL2L1,NA,++++
+BCL6,NA,+++++
+BCOR,NA,++++
+BDNF,NA,+++++
+BEND5,layer 3,+++
+BEND5,layer 5,+++
+BLMH,NA,++
+BRCA1,NA,+
+BRD7,NA,++
+BSN,NA,++++
+BTBD11,interneuron,++++
+BTN2A1,NA,++
+C11orf87,NA,++++
+C1QL2,layer 2,+++
+C1QL2,layer 3,+++
+LAMP5,layer 2,+++++
+LAMP5,layer 3,+++++
+YBEY,NA,+++
+NDNF,interneuron,+++++
+NDNF,layer 1,+++++
+COA1,NA,+++
+RBIS,NA,+
+CA2,oligodendrocyte,+++++
+CA3,NA,-
+CACNA1B,NA,+++
+CACNA1C,NA,+++
+CACNA1D,NA,+++
+CACNA1E,layer 2,+++
+CACNA1E,layer 3,+++
+CACNA1E,layer 6,+++
+CACNA1F,NA,++
+CACNA1G,NA,+++
+CACNA1I,NA,+++
+CACNA1S,NA,+
+CACNA2D1,NA,++
+CACNA2D2,interneuron,++++
+CACNA2D3,NA,+++
+CACNA2D4,NA,+
+CACNB1,NA,+++
+CACNB3,NA,++++
+CACNB4,NA,+++
+CACNG1,NA,-
+CACNG2,NA,+++
+CACNG3,NA,++
+CACNG4,NA,+
+CACNG5,layer 4,++
+CACNG6,NA,+++++
+CACNG7,NA,+++
+CACNG8,NA,++++
+CADPS2,NA,+++++
+CALB1,interneuron,++++
+CALB1,layer 2,++++
+CALB2,interneuron,+++++
+CALY,NA,+++++
+CAMK2A,NA,+++++
+CAMK4,NA,+++
+CAMKK2,NA,+++++
+CARTPT,layer 2,++++
+CARTPT,layer 3,++++
+CASP1,NA,+
+CASP3,NA,+
+CASP7,NA,-
+CASP8,NA,+
+CBLN2,layer 2,++++
+CBLN2,layer 3,++++
+CBLN2,layer 6,++++
+CC2D1A,NA,+++++
+CCDC141,NA,-
+CCK,layer 2,+++++
+CCK,layer 3,+++++
+CCK,layer 5,+++++
+CCK,layer 6,+++++
+CCKAR,NA,+++
+CCKBR,NA,++
+CDH13,interneuron,+++++
+CDH13,layer 2,+++++
+CDH24,layer 6,++++
+CDH7,interneuron,+++
+CDK5,NA,+++
+CDK5R1,NA,++++
+CDK5R2,NA,++++
+CDK5RAP1,NA,+++
+CDK5RAP2,NA,+++
+CDK5RAP3,NA,+++++
+CDKL5,NA,+++
+CENPJ,NA,+++
+CEP290,NA,++
+CERK,interneuron,+++++
+CFC1,NA,++++
+CFTR,NA,+
+CHEK1,NA,-
+CHRM1,NA,+++
+CHRM2,NA,++++
+CHRM3,NA,+++
+CHRM4,NA,++++
+CHRM5,NA,+
+CHRNA10,NA,-
+CHRNA3,layer 4,+++
+CHRNA4,NA,+++
+CHRNA5,NA,++
+CHRNA6,NA,+
+CHRNA7,interneuron,+++
+CHRNA7,layer 1,+++
+CHRNA7,layer 2,+++
+CHRNA9,NA,-
+CHRNB2,NA,++
+CHRNB3,NA,++
+CHRNB4,NA,++
+CHRND,NA,-
+CHRNE,NA,-
+CHRNG,NA,-
+CIT,NA,++++
+CLCA1,NA,-
+CLCA2,NA,-
+CLCA3P,NA,-
+CLCA4,NA,-
+CLCN1,NA,+
+CLCN2,NA,++++
+CLCN3,NA,+++
+CLCN4,NA,+++
+CLCN5,NA,-
+CLCN6,NA,++
+CLCN7,NA,+++
+CLCNKA,NA,-
+CLCNKB,NA,+
+CLDN5,vascular endothelial cell,+++++
+CLIC1,NA,+++
+CLIC2,NA,-
+CLIC3,NA,+++++
+CLIC4,NA,+
+CLIC5,NA,+
+CLIC6,NA,-
+CLN8,NA,+
+CLNS1A,NA,+
+CLOCK,NA,++
+CNGA1,NA,-
+CNGA2,NA,-
+CNGA4,NA,-
+CNGB3,NA,-
+CNP,oligodendrocyte,+++++
+CNR1,interneuron,+++++
+CNR1,layer 1,+++++
+CNR1,layer 2,+++++
+CNR1,layer 6,+++++
+CNTNAP2,NA,++++
+CNTNAP4,interneuron,+++++
+CNTNAP4,laminar,+++++
+COL12A1,NA,+++
+COL24A1,layer 2,++++
+COL24A1,layer 3,++++
+COL24A1,layer 5,++++
+COL24A1,layer 6,++++
+COL5A1,NA,++++
+COL6A1,layer 3,++++
+COL6A1,layer 4,++++
+COL6A1,layer 5,++++
+COL6A1,layer 6,++++
+COL9A3,NA,+++
+COMT,NA,+++
+CORT,interneuron,++++
+COX6A2,NA,++++
+COX8A,NA,++++
+CPLX3,interneuron,++++
+CPNE7,interneuron,++++
+CPNE7,layer 5,++++
+CPNE7,layer 6,++++
+CPOX,NA,+++
+CRBN,NA,+++
+CREB1,NA,++
+CRH,NA,+++++
+CRHBP,interneuron,+++
+CRHR1,NA,+++
+CRHR2,NA,++++
+CRYM,layer 2,+++++
+CRYM,layer 3,+++++
+CRYM,layer 5,+++++
+CRYM,layer 6,+++++
+CSMD1,NA,+++
+CSNK1D,NA,+++
+CSRP1,oligodendrocyte,++++
+CST3,astrocyte,+++++
+CSTB,NA,++
+CCN2,layer 6,+++++
+CTNNB1,NA,+++
+CTNND2,NA,+++
+CTSB,NA,+++++
+CUX1,NA,++++
+CUX2,layer 2,++++
+CUX2,layer 3,++++
+CUX2,layer 4,++++
+CXCL12,NA,-
+CXCL14,layer 1,+++++
+CXCL14,layer 2,+++++
+CXCL14,interneuron,+++++
+CXCL14,astrocyte,+++++
+CYP26B1,NA,+++
+CYP39A1,NA,-
+CCN1,layer 6,+++++
+CCN1,interneuron,+++++
+CCN1,astrocyte,+++++
+DAO,NA,+
+DAOA,NA,-
+DBH,NA,+
+DBN1,NA,+++++
+DCX,NA,-
+DDC,NA,+
+DDIT4L,NA,-
+DDT,NA,+++
+DDX11,NA,++++
+DECR1,NA,+
+DEPTOR,NA,++
+WHRN,NA,++
+DHCR7,NA,++
+DHX9,NA,+++
+DISC1,layer 1,-
+DKC1,NA,++
+DKK3,NA,+++++
+DLEC1,NA,+
+DLG1,NA,++++
+DLG2,NA,+++
+DLG3,NA,+++
+DLG4,NA,+++++
+DLG5,NA,++++
+DLGAP1,NA,+++++
+DLGAP2,NA,++++
+DLX1,interneuron,+++
+DLX5,NA,++
+DPP6,NA,+++++
+DRD1,NA,+++
+DRD3,NA,-
+DRD5,NA,+
+DSG1,NA,-
+DTNA,NA,++++
+DTNBP1,NA,+
+DVL1,NA,+++
+DYM,NA,+++
+DYNC1I2,NA,++++
+DNAAF4,NA,-
+ECE2,NA,+++
+EDNRA,NA,++
+EDNRB,NA,+
+EN2,NA,++
+ENC1,NA,+++++
+ENDOD1,NA,+++
+EPHA6,NA,+++
+ERBB3,NA,+++++
+ERBB4,interneuron,+++++
+ERCC2,NA,+++
+ERCC3,NA,+++
+ERCC5,NA,+++
+ESCO2,NA,+++++
+ESR1,NA,-
+ESR2,NA,-
+ETV1,layer 5,++
+ETV1,layer 6,++
+EXT1,NA,+++
+EYA4,astrocyte,+++
+EYA4,interneuron,+++
+FABP7,NA,-
+FAM111A,NA,-
+FAM111B,NA,-
+FAM20A,NA,-
+FAM3C,layer 5,++++
+TENT5A,interneuron,++++
+FEZ1,NA,+++++
+FGD1,NA,++
+FGF1,NA,++
+FGF14,NA,++
+FGF2,NA,+
+FGF9,NA,+++
+FGFR1,NA,++++
+FGFR2,NA,+++
+FMR1,NA,++
+FOXP2,layer 6,+++
+FRA10AC1,NA,++
+FST,NA,-
+FTSJ1,NA,+++
+FXYD6,layer 2,+++++
+FXYD6,layer 3,+++++
+FXYD6,layer 5,+++++
+FXYD6,layer 6,+++++
+FYN,NA,++++
+GABARAP,NA,+++
+GABARAPL1,NA,+++++
+GABARAPL2,NA,+++
+GABBR1,NA,+++++
+GABBR2,NA,+++++
+GABRA1,NA,+++++
+GABRA2,NA,+
+GABRA3,NA,++
+GABRA4,NA,+++
+GABRA5,layer 5,+++++
+GABRA5,layer 6,+++++
+GABRA5,layer 6,+++++
+GABRA6,NA,-
+GABRB1,NA,++
+GABRB2,NA,+++++
+GABRB3,NA,+++
+GABRD,NA,+++++
+GABRE,NA,-
+GABRG1,NA,+
+GABRG2,NA,+++++
+GABRG3,NA,+++
+GABRP,NA,-
+GABRQ,NA,-
+GABRR1,NA,-
+GABRR2,NA,-
+GABRR3,NA,-
+GAD1,interneuron,+++++
+GAD2,interneuron,+++++
+GALR2,NA,+
+GAP43,NA,+++++
+GDI1,NA,+++++
+GFAP,oligodendrocyte,++++
+GIPR,NA,+
+GJA1,astrocyte,++++
+GLO1,NA,++
+GLRA1,NA,+++
+GLRA2,NA,+
+GLRA3,layer 2,+++
+GLRB,NA,++++
+GLUD2,NA,+
+GM2A,NA,++
+GMPR,NA,-
+GNB4,NA,+
+GNG7,NA,+++
+GNRHR,NA,+
+GOSR1,NA,++
+GPHN,NA,++
+GPR101,NA,+
+ADGRF5,NA,++
+GPR12,NA,++
+GPR156,NA,+
+GPR161,NA,++
+GPR173,NA,+
+GPR176,NA,++
+GPR19,NA,+
+GPR22,NA,+
+GPR3,NA,+
+GPR37,NA,++++
+GPR50,NA,+
+ADGRG1,astrocyte,+++
+GPR6,NA,+
+GPR78,NA,++++
+GPR83,NA,++
+GPR85,NA,+++
+GPR88,NA,-
+ADGRV1,astrocyte,++++
+GPRIN3,NA,-
+GRB2,NA,+++
+GRIA1,NA,++++
+GRIA2,NA,+++++
+GRIA3,NA,+++++
+GRIA4,NA,++++
+GRID1,NA,++
+GRID2,NA,+
+GRIK1,interneuron,+++++
+GRIK2,NA,++++
+GRIK3,NA,++++
+GRIK4,layer 4,++++
+GRIK4,layer 6,++++
+GRIK5,NA,+++
+GRIN1,NA,+++++
+GRIN2A,NA,+++++
+GRIN2B,NA,+++
+GRIN2C,NA,+++
+GRIN2D,NA,++++
+GRIN3A,interneuron,++++
+GRIN3A,layer 5,++++
+GRIN3A,layer 6,++++
+GRIN3B,NA,+
+GRINA,NA,+++++
+GCOM1 ,NA,++
+GRIP1,NA,+++
+GRIP2,NA,++++
+GRM1,NA,+++
+GRM2,NA,++
+GRM3,NA,+++
+GRM4,NA,+++
+GRM6,NA,-
+GRM7,NA,+++
+GRM8,NA,+
+GRPR,NA,+
+GSG1L,layer 2,++
+GSG1L,layer 3,++
+GSK3B,NA,++++
+GSN,oligodendrocyte,+++++
+GTF2H2C,NA,+++
+GTF2I,NA,+++++
+GXYLT2,NA,+
+HAPLN1,NA,+
+HBD,vascular endothelial cell,+++++
+HCN1,NA,++++
+HCN2,NA,++++
+HCN3,NA,-
+HCN4,NA,+++++
+HCRTR1,NA,+++
+HCRTR2,NA,++
+HOMER1,NA,++++
+HPSE,NA,++
+HRH1,NA,-
+HRH4,NA,-
+HSD11B1,NA,+++
+HSPG2,NA,+++
+HTR1A,NA,+++
+HTR1B,NA,+++
+HTR1D,NA,+
+HTR1E,NA,++
+HTR1F,NA,++
+HTR2A,NA,++++
+HTR2B,NA,-
+HTR2C,layer 5,+++
+HTR3A,NA,+
+HTR4,NA,-
+HTR5A,NA,+
+HTR6,NA,+++
+HTR7,NA,+
+HTRA2,NA,++
+ID2,NA,+++++
+IGBP1,NA,+
+IGF1,NA,++
+IGFBP4,NA,+
+IGFN1,NA,+
+IGSF11,layer 2,++++
+IGSF11,layer 3,++++
+IGSF21,NA,+++
+IL1B,NA,-
+IL1RAPL1,NA,+++
+INPP1,NA,+++
+INPP4B,layer 1,+++
+INSR,NA,++
+ITGA5,NA,+
+ITPR2,NA,+++
+ITSN1,NA,+++
+JRK,NA,++
+KCNA1,layer 3,++++
+KCNA1,layer 5,++++
+KCNA1,layer 6,++++
+KCNA10,NA,-
+KCNA2,NA,+++++
+KCNA3,NA,+
+KCNA4,NA,++
+KCNA5,NA,+
+KCNA6,NA,++
+KCNA7,NA,+
+KCNAB1,interneuron,+++++
+KCNAB2,NA,+++++
+KCNAB3,NA,+++++
+KCNB1,NA,++++
+KCNB2,NA,++
+KCNC1,NA,+++++
+KCNC2,interneuron,++++
+KCNC3,NA,+++++
+KCNC4,NA,++
+KCND1,NA,++++
+KCND2,NA,-
+KCND3,NA,++
+KCNE1,NA,-
+KCNE2,NA,-
+KCNE3,NA,+
+KCNE4,NA,-
+KCNF1,NA,+++
+KCNG3,NA,-
+KCNG4,NA,++
+KCNH1,NA,+++
+KCNH2,NA,++
+KCNH3,NA,++++
+KCNH4,layer 2,+++
+KCNH4,layer 3,+++
+KCNH4,layer 6,+++
+KCNH5,NA,+++
+KCNH6,NA,+
+KCNH7,NA,++
+KCNH8,NA,+++
+KCNIP1,interneuron,++++
+KCNIP1,layer 4,++++
+KCNIP2,interneuron,+++++
+KCNIP2,layer 2,+++++
+KCNIP2,layer 3,+++++
+KCNIP3,NA,++++
+KCNJ1,NA,-
+KCNJ10,NA,+++
+KCNJ11,NA,++
+KCNJ12,NA,+++
+KCNJ13,NA,-
+KCNJ14,NA,-
+KCNJ15,NA,-
+KCNJ16,NA,-
+KCNJ2,NA,+
+KCNJ3,NA,++++
+KCNJ4,NA,+++
+KCNJ5,NA,++
+KCNJ6,NA,+++
+KCNJ8,NA,-
+KCNK1,NA,+++++
+KCNK10,NA,+
+KCNK13,NA,++
+KCNK15,NA,+
+KCNK16,NA,+
+KCNK17,NA,-
+KCNK18,NA,-
+KCNK2,layer 5,++
+KCNK2,layer 6,++
+KCNK3,NA,+++++
+KCNK4,NA,++
+KCNK5,NA,++
+KCNK6,NA,+++++
+KCNK7,NA,-
+KCNK9,NA,++
+KCNMB1,NA,+
+KCNMB2,NA,-
+KCNMB3,NA,+
+KCNMB4,NA,+++
+KCNN1,NA,++
+KCNN2,NA,+++
+KCNN3,NA,-
+KCNN4,NA,+
+KCNQ1,NA,++
+KCNQ2,NA,++++
+KCNQ3,NA,+++
+KCNQ4,NA,+
+KCNQ5,NA,+++
+KCNS2,NA,++
+KCNS3,interneuron,+++
+KCNT1,NA,+++++
+KCNT2,NA,-
+KCNV1,NA,+++
+KCNV2,NA,+
+KCTD12,interneuron,++++
+KCTD4,NA,++
+KDM5C,NA,++++
+MINAR1,NA,+
+CEMIP,interneuron,+++
+KIFBP,NA,++++
+FAM214A,NA,+++
+TRMT9B,layer 4,++++
+TRMT9B,layer 5,++++
+TRMT9B,layer 6,++++
+KIT,interneuron,+++++
+KLK6,NA,++++
+KRT80,NA,++
+KRT9,NA,+
+L1CAM,NA,++++
+LARGE1,NA,++++
+LAYN,NA,+
+LDLR,NA,++
+LEPR,NA,+++
+LGALS1,layer 3,++++
+LGALS1,layer 5,++++
+LGI1,NA,+++
+LGI2,interneuron,++++
+LGI3,NA,+++++
+LGR4,NA,-
+LGR5,NA,-
+LGR6,NA,+
+LHX1,NA,+
+LHX6,interneuron,+++
+LIG4,NA,+
+LRP1,NA,++++
+LRP2,NA,++
+LRP8,NA,++++
+LRRC1,NA,+
+LRRC15,NA,++
+LRRK2,NA,+++
+LRRN3,NA,+++
+LSAMP,NA,++++
+LXN,NA,++
+LYNX1,NA,+++++
+LYPD1,interneuron,++++
+LYPD6,NA,++
+MAD1L1,NA,++
+MAFB,interneuron,+++
+MAOA,NA,NA
+MAOB,NA,++++
+MAP1A,NA,+++++
+MAPK1,NA,++++
+MAPK10,NA,+++++
+MAPT,NA,+++++
+MARCKSL1,NA,+++++
+MBP,oligodendrocyte,+++++
+MC1R,NA,+
+MC2R,NA,-
+MC3R,NA,-
+MC5R,NA,+
+MCHR1,NA,++
+MCHR2,NA,+++
+MCM7,NA,++
+MCPH1,NA,++
+MECP2,NA,++++
+MEPCE,NA,++++
+MET,NA,+++++
+MFGE8,layer 3,+++
+MME,NA,++
+MOBP,oligodendrocyte,+++++
+MOG,oligodendrocyte,+++++
+MPDZ,NA,++
+MTDH,NA,+++
+MYBPC1,interneuron,+++
+MYL4,NA,++
+NAIP,NA,+++
+NBN,NA,+++
+NBPF14,NA,++++
+NBPF3,NA,++++
+NCAM1,NA,+++++
+NCAN,NA,++++
+NDE1,NA,++++
+NDEL1,NA,++++
+NEFH,NA,+++++
+NEFL,NA,+++++
+NEFM,NA,+++++
+NEK2,NA,-
+NETO2,NA,+
+NGF,NA,+
+NGFR,NA,+
+NHEJ1,NA,+
+NLGN1,NA,+++
+NLGN2,NA,+++
+NLGN3,NA,+++
+NLGN4X,NA,++
+NMB,NA,++++
+NNAT,NA,+++++
+NOS1,interneuron,+++++
+CCN3 ,NA,+
+NPAS1,interneuron,+++
+NPAS3,interneuron,+++
+NPAS3,astrocyte,+++
+NPBWR2,NA,+
+NPIPB3,NA,+++++
+NPR3,NA,+++
+NPSR1,NA,-
+NPVF,NA,-
+NPY,interneuron,+++++
+NPY1R,NA,+++
+NPY2R,layer 6,+++
+NPY5R,NA,+
+NR2F2,NA,++
+NR3C1,NA,++++
+NR4A2,layer 6,+++++
+NR4A2,layer 6,+++++
+NRCAM,NA,+++++
+NRG1,NA,+
+NRIP3,interneuron,++++
+NRXN1,NA,+++
+NTF3,NA,-
+NTNG2,layer 6,+++++
+NTRK2,NA,+++++
+NTRK3,NA,++++
+NTS,NA,-
+NTSR2,NA,+
+NUDT4,NA,+++++
+NXPH1,interneuron,+++
+OMG,NA,++
+OPHN1,NA,+++
+OPRD1,NA,+
+OPRK1,layer 6,+++
+OPRL1,NA,++
+OPRM1,NA,+
+OXT,NA,-
+OXTR,NA,+
+PAFAH1B1,NA,+++++
+PAIP1,NA,+++
+PAK2,NA,+++
+PAK3,NA,+++
+PRKN,NA,+++
+PARK7,NA,+++++
+PARM1,NA,+++++
+PAX6,NA,++
+PCDH17,layer 6,++++
+PCDH18,interneuron,+++
+PCDH20,layer 5,++
+PCDH20,layer 6,++
+PCDHA6,NA,++
+PCNT,NA,+++++
+PCP4,layer 5,+++++
+PCP4,layer 6,+++++
+PDE10A,NA,++
+PDE1A,layer 5,++++
+PDE1A,layer 6,++++
+PDE4B,NA,+++
+PDE4DIP,NA,+++++
+PDE5A,NA,+
+PDHX,NA,+++
+PDLIM5,NA,+
+PDYN,interneuron,++++
+PDYN,layer 4,++++
+PEG3,NA,+++++
+PENK,layer 2,+++++
+PENK,layer 3,+++++
+PENK,layer 6,+++++
+PHF8,NA,+++
+PHGDH,NA,NA
+PIK3CB,NA,+++
+PIK3CG,NA,-
+PINK1,NA,+++++
+PLAU,NA,+
+PLAUR,NA,++
+PLTP,vascular endothelial cell,++
+PLXNA2,NA,++++
+PLXND1,NA,+++
+PMCH,NA,-
+PNOC,interneuron,++++
+POM121,NA,+++++
+POMT1,NA,++++
+PLPP3,astrocyte,++++
+PPP1R1B,NA,+++
+PPP3CA,NA,+++++
+PPP3CB,NA,+++
+PPP3CC,NA,+
+PQBP1,NA,+++
+PRKCB,NA,+++++
+PRKCG,NA,++++
+PRLH,NA,++++
+PRLHR,NA,++
+PRODH,astrocyte,+++++
+PRSS12,layer 3,++
+PRSS12,layer 4,++
+PRSS23,NA,+
+PSEN1,NA,+++
+PSEN2,NA,++
+PTEN,NA,+++
+PTGS2,NA,+++
+PTHLH,interneuron,++++
+PVALB,interneuron,+++++
+NECTIN3,layer 2,+++
+NECTIN3,layer 3,+++
+QDPR,oligodendrocyte,+++++
+QRFPR,NA,-
+RAB3B,NA,+++++
+RAB3C,NA,++++
+RAB3GAP1,NA,+++
+RAB3IP,NA,+++
+RAB6A,NA,+++++
+RANBP9,NA,+++
+RAPGEF4,NA,++++
+RASGRF2,layer 2,++++
+RASGRF2,layer 3,++++
+RASSF7,NA,+++
+RELN,interneuron,+++++
+RELN,layer 1,+++++
+REST,NA,+
+RGS10,NA,+
+RGS4,NA,+++++
+RNASEH2A,NA,+
+RNASEH2B,NA,-
+RNASEH2C,NA,+
+RND2,NA,++
+RNF144B,interneuron,+++
+ROCK1,NA,++
+RORB,layer 4,++++
+RPRM,layer 5,++++
+RPRM,layer 6,++++
+RPS6KA3,NA,+
+RRP8,NA,++
+RSPO1,NA,++
+RTN4,NA,+++++
+RTN4R,NA,++++
+RXFP1,layer 5,++++
+RXFP1,layer 6,++++
+RXFP3,NA,+
+RXFP4,NA,+++++
+S100A10,NA,+
+S100B,oligodendrocyte,+++++
+SCN10A,NA,-
+SCN11A,NA,+
+SCN1A,NA,+++++
+SCN1B,NA,+++++
+SCN2A,NA,+++
+SCN2B,NA,++++
+SCN3A,NA,-
+SCN3B,layer 2,++++
+SCN3B,layer 3,++++
+SCN3B,layer 6,++++
+SCN4A,NA,++
+SCN4B,layer 3,+++++
+SCN4B,layer 5,+++++
+SCN5A,NA,+
+SCN7A,NA,-
+SCN8A,NA,+++
+SCN9A,NA,-
+SCNN1A,NA,+
+SCNN1B,NA,-
+SCNN1D,NA,++++
+SCNN1G,NA,+
+SCRT1,NA,+++++
+SDK1,NA,+++
+SEMA3C,interneuron,+++
+SEMA3C,layer 6,+++
+SEMA3F,NA,+
+SEMA4G,NA,++
+SEMA5B,NA,+++
+SERF1A,NA,+++++
+SGK1,NA,++
+SLA,NA,+
+SLC17A7,NA,+++++
+SLC17A8,NA,++++
+SLC18A1,NA,+
+SLC18A2,NA,+
+SLC18A3,NA,+
+SLC1A1,NA,+++
+SLC1A2,astrocyte,+++++
+SLC1A3,astrocyte,++++
+SLC1A4,NA,++
+SLC1A5,NA,++
+SLC1A6,NA,++
+SLC1A7,NA,+
+SLC20A1,NA,++++
+SLC23A3,NA,+
+SLC24A3,NA,+++
+SLC25A22,NA,++++
+SLC2A1,vascular endothelial cell,++++
+SLC32A1,interneuron,+++++
+SLC6A1,interneuron,+++++
+SLC6A11,NA,++
+SLC6A12,interneuron,++++
+SLC6A13,interneuron,++++
+SLC6A14,NA,-
+SLC6A2,NA,-
+SLC6A3,NA,+
+SLC6A4,NA,-
+SLC6A7,NA,++++
+SLC6A8,NA,+++
+GUSBP14 ,NA,+++++
+SMAD1,NA,-
+SMS,NA,++++
+SNAP23,NA,+++++
+SNAP25,NA,+++++
+SNAP29,NA,++
+SNAP91,NA,++++
+SNAPIN,NA,++
+SNCA,NA,+++++
+SNCAIP,NA,+++
+SNCB,NA,+++++
+SNCG,layer 3,+++++
+SNCG,layer 5,+++++
+SNPH,NA,++++
+SNTA1,NA,++
+SNTB1,layer 6,+++
+SNTB2,NA,+++
+SNTG1,NA,+++
+SNTG2,NA,-
+SNX3,NA,++++
+SOD1,NA,+++++
+SORL1,NA,+++++
+SPARC,NA,+++
+SPP1,oligodendrocyte,+++++
+SPTBN4,NA,++++
+SPTLC1,NA,++
+SRP9,NA,-
+SST,interneuron,+++++
+SSTR1,NA,++
+SSTR3,NA,+++
+SSTR4,NA,-
+STARD8,NA,+
+STEAP2,NA,+++
+STRN,NA,+
+STX10,NA,++
+STX11,NA,++
+STX12,NA,++
+STX16,NA,++++
+STX17,NA,+
+STX18,NA,++
+STX19,NA,-
+STX1B,NA,+++++
+STX2,NA,+++++
+STX3,NA,+++
+STX4,NA,++
+STX5,NA,+++
+STX6,NA,+++
+STX7,NA,++
+STX8,NA,++
+STXBP1,NA,+++++
+STXBP2,NA,-
+STXBP4,NA,-
+STXBP5,NA,+++
+STXBP6,NA,+++
+SULF1,interneuron,++++
+SULF1,layer 4,++++
+SULF1,layer 5,++++
+SV2A,NA,+++++
+SV2B,NA,+++++
+SV2C,layer 3,++++
+SYN1,NA,+++++
+SYN2,NA,+++++
+SYN3,NA,+++
+SYNE1,NA,+++++
+SYNGAP1,NA,++++
+SYNGR1,NA,+++
+SYNGR2,NA,+
+SYNGR3,NA,+++
+SYNGR4,NA,+
+SYNJ1,NA,+++
+SYNJ2,NA,++++
+SYNPO2,NA,+++
+SYNPR,interneuron,++++
+SYNPR,layer 6,++++
+SYP,NA,+++++
+SYPL1,NA,++
+SYPL2,NA,+
+SYT1,NA,+++++
+SYT10,layer 6,++
+SYT11,NA,+++++
+SYT12,NA,+++
+SYT13,NA,++++
+SYT14,NA,++
+SYT15,NA,+++
+SYT16,NA,++
+SYT17,layer 2,+++
+SYT17,layer 3,+++
+SYT17,layer 5,+++
+SYT2,layer 3,+++++
+SYT2,layer 5,+++++
+SYT3,NA,++
+SYT4,NA,++++
+SYT5,NA,++++
+SYT6,layer 6,+++++
+SYT7,NA,+++++
+SYT9,NA,-
+SYTL1,NA,+
+SYTL2,NA,++
+SYTL4,NA,+
+TAAR6,NA,-
+TAC1,interneuron,++++
+TAC3,interneuron,++++
+TACR1,NA,++++
+TACR2,NA,-
+TACR3,NA,-
+TAP1,NA,+
+TAP2,NA,+++
+TDO2,NA,-
+TF,NA,+++++
+TGFB1,NA,++++
+TH,interneuron,+++++
+TH,layer 6,+++++
+THBS2,NA,+++
+THSD7B,NA,+++
+TIAM1,NA,+++
+NKX2-1,NA,+
+TLE4,layer 6,++++
+TM6SF1,NA,++
+TMEM145,NA,++++
+TMEM150C,NA,+
+TMEM163,layer 3,++
+TMEM163,layer 5,++
+TMEM163,layer 6,++
+TMEM200A,NA,+
+TMEM215,layer 4,+++
+TNF,NA,+
+TNFAIP8L3,interneuron,+++
+TNMD,NA,-
+TNNC1,NA,-
+TNNT1,NA,+++
+TOX,layer 5,++
+TOX,layer 6,++
+TPBG,layer 3,+++
+TPBG,layer 5,+++
+TPBG,layer 6,+++
+TPH1,NA,-
+TPH2,NA,-
+TRH,NA,+++
+TRHR,NA,+
+TRIB2,layer 5,++++
+TRPC4,NA,++
+TRPC6,NA,++
+TRPM6,NA,+
+TSC1,NA,+++
+TSC2,NA,++++
+TSPAN8,NA,-
+TTR,NA,++
+TUT1,NA,+++
+UBASH3B,interneuron,+++
+UBE3A,NA,+++
+UCHL1,NA,+++++
+USP10,NA,++
+VAMP1,NA,+++++
+VAMP2,NA,++++
+VAMP3,NA,+
+VAMP4,NA,+
+VAMP8,NA,+
+VAPA,NA,++
+VAT1L,layer 5,+++++
+VIP,interneuron,++++
+VIPR1,NA,++++
+VIPR2,NA,+++
+VLDLR,NA,+++
+VRK3,NA,+++
+WFS1,layer 2,+++
+WNK1,NA,+++
+WNT2,NA,+
+XBP1,NA,++
+YJEFN3,interneuron,+++++
+ZDHHC15,NA,+
+ZEB2,NA,+++
+ZNF197,NA,++
+ZNF41,NA,+++
+ZNF674,NA,+
+ZNRF4,NA,-

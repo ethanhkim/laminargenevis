@@ -1,0 +1,53 @@
+Notes on He et al Data
+
+All Ensembl ID's were identical
+
+Constants for layers with regards to the 17 divisions:
+
+Macaque:
+L1: 1
+L2: 2, 3 (4/5)
+L3: (4/5) 6 (7)
+L4: (7/8/9/10)
+L5: (9/10) 11, 12, (13)
+L6: (13), 14, 15, 16
+White matter: 17
+
+Human:
+L1: 1
+L2: 2, 3, (4)
+L3: (4), 5, 6
+L4: 7, 8, (9)
+L5: (9), 10, 11, 12
+L6: 13, 14, 15, 16
+White matter: 17
+
+Monkey:
+L1: 1
+L2: 2, 3 (4/5)
+L3: (4/5, 6, (7)
+L4: (7/8/9/10)
+L5: (8/9/10), 11, 12, 13
+L6: 14, 15, 16
+White matter: 17
+
+We can throw out S17
+
+
+Thoughts:
+
+Maybe use quantiles as a measure for +, ++, +++, ++++, +++++ ?
+then report discrepancies between the measures
+
+
+Z-score across v1-17 for each gene
+transpose 
+
+---------
+Duplicates:
+
+Duplicates were examined (TUT1, CRHR1 and SERF1A) for their ensembl ID and although they were different, when mapped to entrez and gene symbol:
+- TUT1's duplicate was a paralog
+
+Select only genes in Zeng? for each layer to make heat map
+Not enough genes to do just zeng though
