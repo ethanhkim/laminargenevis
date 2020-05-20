@@ -38,7 +38,9 @@ ui <- fluidPage(
                 ),
               
               mainPanel(h3("Layer-specific Heat Map"),
-                        h4("He et al"),
+                  br(),
+                  br(),
+                  br(),
                   div(id = "main",
                       # Output: Heatmap of He et al gene expression
                       plotlyOutput("He_heatmap")),
@@ -46,7 +48,7 @@ ui <- fluidPage(
                   br(),
                   br(),
                   br(),
-                      h4("Maynard et al"),
+
                   div(id = "second",
                       # Output: Heatmap of Maynard et al gene expression
                       plotlyOutput("Maynard_heatmap"))
@@ -82,7 +84,9 @@ server <- function(input, output, session) {
     output$He_heatmap <- renderPlotly({
       p <- ggplot(data = He_heatmap_data, mapping = aes(x = Cuts, y = Gene_symbol, fill = Z_score)) +
          geom_tile() +
-        scale_fill_distiller(palette = "RdYlBu")
+        scale_fill_distiller(palette = "RdYlBu") +
+        labs(y = "", x = "", title = "He et al Heatmap") +
+        labs(caption = "(based on data from He et al, 2017")
       p <- ggplotly(p)      
       p
       })
@@ -100,7 +104,9 @@ server <- function(input, output, session) {
     output$Maynard_heatmap <- renderPlotly({
       p <- ggplot(data = Maynard_heatmap_data, mapping = aes(x = Cuts, y = Gene_symbol, fill = Z_score)) +
         geom_tile() +
-        scale_fill_distiller(palette = "RdYlBu")
+        scale_fill_distiller(palette = "RdYlBu") +
+        labs(y = "", x = "", title = "Maynard et al Heatmap",
+             caption = "(based on data from Maynard et al, 2020)")
       p <- ggplotly(p)      
       p
     })
