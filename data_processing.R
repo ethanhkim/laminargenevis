@@ -187,12 +187,7 @@ Maynard_dataset_average <- tibble(
   as_tibble() %>%
   add_column("gene_symbol" = Maynard_dataset$gene_symbol)
 
-## Create common gene between He and Maynard dataset ##
-common_genelist <- intersect(He_DS1_Human$gene_symbol, Maynard_dataset$gene_symbol) %>%
-  sort()
-
-
-## Create .RData files for loading in
+## Create .RData files for loading into app
 
 dir.create("./data/processed")
 save(He_DS1_Human_averaged, file = './data/processed/He_DS1_Human_averaged.Rdata')

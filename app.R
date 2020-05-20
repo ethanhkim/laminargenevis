@@ -80,16 +80,16 @@ server <- function(input, output, session) {
       melt() %>%
       as_tibble() %>%
       dplyr::rename(Cuts = "Var1", Gene_symbol = "Var2", Z_score = "value")
-      
+    
     output$He_heatmap <- renderPlotly({
       p <- ggplot(data = He_heatmap_data, mapping = aes(x = Cuts, y = Gene_symbol, fill = Z_score)) +
-         geom_tile() +
+        geom_tile() +
         scale_fill_distiller(palette = "RdYlBu") +
         labs(y = "", x = "", title = "He et al Heatmap") +
         labs(caption = "(based on data from He et al, 2017")
       p <- ggplotly(p)      
       p
-      })
+    })
     
     Maynard_heatmap_data <- Maynard_dataset_average %>%
       dplyr::filter(gene_symbol %in% selected_gene_list) %>%
