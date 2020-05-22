@@ -12,6 +12,7 @@ library(reshape2)
 source("./string_processing.R") 
 load('./data/processed/He_DS1_Human_averaged.Rdata', verbose = TRUE)
 load('./data/processed/Maynard_dataset_average.Rdata', verbose = TRUE)
+load('./data/processed/Compared_Layer_markers.Rdata', verbose = TRUE)
 
 # Define UI ----
 ui <- fluidPage(
@@ -28,7 +29,7 @@ ui <- fluidPage(
                   ),
                 
                 # Submit button
-                actionButton(inputId = "submit", label = "Submit"),
+                actionButton(inputId = "submit_heatmap", label = "Submit"),
                 
                 # Spaces
                 br(),
@@ -52,8 +53,39 @@ ui <- fluidPage(
                   div(id = "second",
                       # Output: Heatmap of Maynard et al gene expression
                       plotlyOutput("Maynard_heatmap"))
-                )
-            )
+                ),
+            ),
+        ),
+      
+      tabPanel(title = "Layer enrichment",
+          sidebarLayout(
+            
+            sidebarPanel(
+              h3("Search for layer enrichment"),
+              
+              # Input: Selector for which genes to visualize ----
+              textInput(
+                inputId = "layer_marker_genelist", label = "Gene", 
+                placeholder = "GAD1, CCK, GRIN1"
+              ),
+              
+              br(),
+              br(),
+              
+              # Submit button
+              actionButton(inputId = "submit_layer_marker", label = "Submit")
+              ),
+            
+            mainPanel(h3("Layer Enrichment"),
+                      br(),
+                      br(),
+                      br(),
+                      
+                      div(id = "main",
+                          # Output: List of layer markers
+                          dataTableOutput("Layer_marker"))
+             )
+          )
         )
     )
 )
@@ -64,15 +96,19 @@ server <- function(input, output, session) {
   common_genelist <- intersect(He_DS1_Human_averaged$gene_symbol, Maynard_dataset_average$gene_symbol) %>%
     sort()
   
+  layer_marker_table <- Compared_Layer_Markers %>%
+    replace(is.na(.), "N/A")
+  
   updateSelectizeInput(session, inputId = "genelist", 
                        choices = common_genelist, server = TRUE)
+
   
-  observeEvent(input$submit, {
+  observeEvent(input$submit_heatmap, {
     
-    selected_gene_list <- isolate(process_gene_input(input$genelist))
+    selected_gene_list_heatmap <- isolate(process_gene_input(input$genelist))
     
     He_heatmap_data <- He_DS1_Human_averaged %>%
-      dplyr::filter(gene_symbol %in% selected_gene_list) %>%
+      dplyr::filter(gene_symbol %in% selected_gene_list_heatmap) %>%
       distinct(gene_symbol, .keep_all = TRUE)  %>%
       arrange(gene_symbol) %>%
       column_to_rownames(var = "gene_symbol") %>%
@@ -92,7 +128,7 @@ server <- function(input, output, session) {
     })
     
     Maynard_heatmap_data <- Maynard_dataset_average %>%
-      dplyr::filter(gene_symbol %in% selected_gene_list) %>%
+      dplyr::filter(gene_symbol %in% selected_gene_list_heatmap) %>%
       distinct(gene_symbol, .keep_all = TRUE)  %>%
       arrange(gene_symbol) %>%
       column_to_rownames(var = "gene_symbol") %>%
@@ -110,7 +146,23 @@ server <- function(input, output, session) {
       p <- ggplotly(p)      
       p
     })
+    
   })
+  
+  # Take input for Layer Enrichment subpage and output data table with inputted genes
+  observeEvent(input$submit_layer_marker, {
+    
+    selected_genelist_layer_marker <- isolate(process_gene_input(input$layer_marker_genelist))
+    
+    table <- layer_marker_table %>%
+      dplyr::filter(gene_symbol %in% selected_genelist_layer_marker)
+    
+    output$Layer_marker <- renderDataTable({
+      table
+    }, escape = FALSE)
+    
+  })
+
 }
   
 
