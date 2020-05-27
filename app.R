@@ -24,7 +24,7 @@ ui <- fluidPage(
                 
                 # Input: Selector for which genes to visualize ----
                 selectizeInput(
-                  inputId = "genelist", label = "Gene", choices = NULL,
+                  inputId = "genelist", label = "Input genes:", choices = NULL,
                   selected = NULL, multiple = TRUE, options = NULL
                   ),
                 
@@ -57,15 +57,14 @@ ui <- fluidPage(
             ),
         ),
       
-      tabPanel(title = "Layer enrichment",
+      tabPanel(title = "Layer Markers",
           sidebarLayout(
             
             sidebarPanel(
-              h3("Search for layer enrichment"),
-              
               # Input: Selector for which genes to visualize ----
-              textInput(
-                inputId = "layer_marker_genelist", label = "Gene", 
+              textAreaInput(
+                inputId = "layer_marker_genelist", 
+                label = "Input your gene list:", 
                 placeholder = "GAD1, CCK, GRIN1"
               ),
               

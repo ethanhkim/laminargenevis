@@ -5,6 +5,6 @@ account: ethanhkim
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2325091
-bundleId: 3176953
+bundleId: 3177015
 url: https://ethanhkim.shinyapps.io/transcriptome_app/
-when: 1590107949.6272
+when: 1590109826.98146
