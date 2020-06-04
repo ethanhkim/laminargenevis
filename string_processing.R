@@ -1,3 +1,5 @@
+## Scripts for processing strings and/or data ##
+
 ## Process gene input from app ##
 
 ## From Derek Howard, Leon French's tool "Polygenic Layers" 
