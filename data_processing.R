@@ -1,7 +1,7 @@
 library(reshape2)
 library(dplyr)
 
-
+## Function to process heatmap data ##
 process_heatmap_function <- function(source_dataset, input_genelist){
   
   source_dataset %>%
@@ -14,6 +14,8 @@ process_heatmap_function <- function(source_dataset, input_genelist){
     as_tibble() %>%
     dplyr::rename(Cuts = "Var1", Gene_symbol = "Var2", Z_score = "value")
 }
+
+## Function to process barplot data ##
 
 process_barplot_data <- function(input_genelist) {
   
@@ -50,8 +52,9 @@ separate_layers <- function(input_table, input_genelist) {
   
   for(i in c(1:7)) {
     layer <- input_table %>%
+      dplyr::filter(str_detect(source_dataset, 'Zeng')) %>%
       dplyr::filter(gene_symbol %in% input_genelist, 
-             layer_marker == i) %>%
+             layer_marker == i) %>% 
       select(-"layer_marker", -"source_dataset")
     layer_gene_symbol <- as.vector(layer$gene_symbol)
     list_of_layers[[i]] <- layer_gene_symbol
@@ -59,6 +62,5 @@ separate_layers <- function(input_table, input_genelist) {
   
  return(list_of_layers)
 }
-
 
 

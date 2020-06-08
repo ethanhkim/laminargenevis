@@ -64,21 +64,20 @@ ui <- fluidPage(
                                                h4("The data for this application has been sourced from these following studies:"),
                                                br(),
                                                br(),
-                                               h3(a("Zeng et al.", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
+                                               h3(a("Zeng et al. (2012)", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
                                                h4("This study from the Allen Brain Institute examined 46 neurotypical brains and assayed roughly 1000 genes 
                                                   through in-situ hybridization."),
                                                br(),
-                                               h3(a("He et al.", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
-                                               h4("This study assayed roughly 50,000 genes through high-throughout RNA-seq"),
+                                               h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
+                                               h4("This study assayed the whole genome using high-throughout RNA-seq."),
                                                br(),
-                                               h3(a("Maynard et al.", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
-                                               h4("This study is currently a pre-print; it assayed roughly 40,000 genes through the 10X Genomics Visium Platform.")
+                                               h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
+                                               h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform.")
                                       ),
                                       tabPanel("Gene Visualization",
                                                # Only show if Input from checkboxGroupInput is Multiple - only shows rendered heatmaps
                                                br(),
                                                conditionalPanel(
-                                                 br(),
                                                  h3("Layer-specific Heatmaps"),
                                                  condition = "input.selector == 'Multiple'",
                                                  plotlyOutput("He_heatmap"),
@@ -86,19 +85,14 @@ ui <- fluidPage(
                                                  br(),
                                                  plotlyOutput("Maynard_heatmap"),
                                                  br(),
-                                                 h4(verbatimTextOutput("summary_multiple")),
-                                                 br(),
-                                                 br(),
-                                                 dataTableOutput("Layer_marker_multiple")),
+                                                 h4(verbatimTextOutput("summary_multiple"))),
                                                # Only show if input from checkboxGroupInput is Single - only show layer-specific barplot
                                                conditionalPanel(
                                                  h3("Layer-specific gene expression"),
                                                  condition = "input.selector == 'Single'",
                                                  plotlyOutput("Barplot"),
                                                  br(),
-                                                 h4(verbatimTextOutput("summary_single")),
-                                                 br(),
-                                                 dataTableOutput("Layer_marker_single")
+                                                 h4(verbatimTextOutput("summary_single"))
                                                )
                                       )
                           )
@@ -116,7 +110,8 @@ server <- function(input, output, session) {
     sort()
   
   layer_marker_table <- Compared_Layer_Markers %>%
-    replace(is.na(.), "N/A")
+    filter(!is.na(layer_marker)) %>%
+    filter(str_detect(source_dataset, 'Zeng'))
   
   updateSelectizeInput(session, inputId = "genelist", 
                        choices = common_genelist, server = TRUE)
@@ -142,9 +137,6 @@ server <- function(input, output, session) {
       
       table <- layer_marker_table %>%
         dplyr::filter(gene_symbol %in% selected_gene_list_single)
-      output$Layer_marker_single <- renderDataTable({
-        table
-      }, escape = FALSE)
       
       layer_specific_gene_list_single <- separate_layers(table, selected_gene_list_single)
       names(layer_specific_gene_list_single) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
@@ -153,51 +145,64 @@ server <- function(input, output, session) {
       output$summary_single <- renderPrint({
         cat(paste0(
           selected_gene_list_single,
-          " was found to be ",
-          if (sum(selected_gene_list_single %in% unique(Zeng_dataset_updated$gene_symbol)) == 0) {
-            "not assayed by Zeng et al. "
-          } else
-            "assayed by Zeng et al. ",
+          " was found to be:\n\n",
           if (sum(selected_gene_list_single %in% unique(He_DS1_Human_averaged$gene_symbol)) == 0) {
-            "not assayed by He et al., "
+            "Not assayed by He et al.,\n"
           } else
-            "assayed by He et al., ",
+            "Assayed by He et al.,\n",
           if (sum(selected_gene_list_single %in% unique(Maynard_dataset_average$gene_symbol)) == 0) {
-            "and not assayed by Maynard et al. "
+            "Not assayed by Maynard et al.,\n"
           } else
-            "and assayed by Maynard et al.\n\n",
-          
-          selected_gene_list_single,
-          " was found:\n\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 1`)) == 0) {
-            "Not to mark layer 1.\n"
-          } else "To mark layer 1.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 2`)) == 0) {
-            "Not to mark layer 2.\n"
-          } else "To mark layer 2.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 3`)) == 0) {
-            "Not to mark layer 3.\n"
-          } else "To mark layer 3.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 4`)) == 0) {
-            "Not to mark layer 4.\n"
-          } else "To mark layer 4.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 5`)) == 0) {
-            "Not to mark layer 5.\n"
-          } else "To mark layer 5.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`Layer 6`)) == 0) {
-            "Not to mark layer 6.\n"
-          } else "To mark layer 6.\n",
-          
-          if (length(unlist(layer_specific_gene_list_single$`WM`)) == 0) {
-            "Not to mark white matter.\n"
-          } else "To mark white matter.",
-          sep = "\n"
+            "Assayed by Maynard et al.,\n",
+          if (sum(selected_gene_list_single %in% unique(Zeng_dataset_updated$gene_symbol)) == 0) {
+            "Not assayed by Zeng et al.\n"
+          } else {
+            paste0(
+              "Assayed by Zeng et al.\n\nIn the Zeng dataset, ",
+              selected_gene_list_single,
+              " was found to:\n\n",
+              if (length(unlist(layer_specific_gene_list_single $`Layer 1`)) == 0 &
+                  length(unlist(layer_specific_gene_list_single $`Layer 2`)) == 0 &
+                  length(unlist(layer_specific_gene_list_single $`Layer 3`)) == 0 &
+                  length(unlist(layer_specific_gene_list_single $`Layer 4`)) == 0 & 
+                  length(unlist(layer_specific_gene_list_single $`Layer 5`)) == 0 &
+                  length(unlist(layer_specific_gene_list_single $`Layer 6`)) == 0 &
+                  length(unlist(layer_specific_gene_list_single $White_matter)) == 0) {
+                "Not mark any layer."
+              } else {
+                paste0(
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 1`)) == 0) {
+                    ""
+                  } else "Mark layer 1.\n",
+            
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 2`)) == 0) {
+                    ""
+                  } else "Mark layer 2.\n",
+                  
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 3`)) == 0) {
+                    ""
+                  } else "Mark layer 3.\n",
+                  
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 4`)) == 0) {
+                    ""
+                  } else "Mark layer 4.\n",
+                  
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 5`)) == 0) {
+                    ""
+                  } else "Mark layer 5.\n",
+                  
+                  if (length(unlist(layer_specific_gene_list_single$`Layer 6`)) == 0) {
+                    ""
+                  } else "Mark layer 6.\n",
+                  
+                  if (length(unlist(layer_specific_gene_list_single$`WM`)) == 0) {
+                    ""
+                  } else "Mark white matter.",
+                  sep = "\n"
+                )
+              }
+            )
+          }
         ))
       })
       
@@ -223,10 +228,6 @@ server <- function(input, output, session) {
         p
       })
       
-      output$Layer_marker_multiple <- renderDataTable({
-        table
-      }, escape = FALSE)
-      
       table <- layer_marker_table %>%
         dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
       
@@ -239,53 +240,67 @@ server <- function(input, output, session) {
         cat(paste0(
           "Of the ",
           length(selected_gene_list_multiple),
-          " input genes, ",
+          " input genes:\n\n",
           sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
           " were assayed by He et al.,\n",
           sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
           " were assayed by Maynard et al., \nand ",
           
           if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_updated$gene_symbol)) == 0) {
-            " no genes were assayed by Zeng et al."
-          } else 
-            sum(selected_gene_list_multiple %in% unique(Zeng_dataset_updated$gene_symbol)),
-          " were assayed by Zeng et al. \n\nOf those genes:\n\n",
-          
-          if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
-            "No genes were found to mark layer 1.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," marked layer 1 (", 
-                        paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
-            "No genes were found to mark layer 2.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " marked layer 2 (", 
-                        paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
-            "No genes were found to mark layer 3.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " marked layer 3 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
-            "No genes were found to mark layer 4.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " marked layer 4 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
-            "No genes were found to mark layer 5.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " marked layer 5 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
-            "No genes were found to mark layer 6.\n"
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " marked layer 6 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
-          
-          if (length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
-            "No genes were found to mark white matter."
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " marked white matter (",
-                        paste(layer_specific_gene_list_multiple $White_matter, collapse = ", "), ").")
-        ), sep = "\n")
+            "0 genes were assayed by Zeng et al."
+          } else {
+            paste0(
+              sum(selected_gene_list_multiple %in% unique(Zeng_dataset_updated$gene_symbol)),
+              " were assayed by Zeng et al.\n\nIn the Zeng dataset:\n\n",
+              
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
+                  length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0 &
+                  length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0 &
+                  length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0 & 
+                  length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0 &
+                  length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0 &
+                  length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
+                "No genes were found to mark any layer."
+              } else {
+                paste0( if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," marked layer 1 (", 
+                              paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " marked layer 2 (", 
+                              paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " marked layer 3 (",
+                              paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " marked layer 4 (",
+                              paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " marked layer 5 (",
+                              paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " marked layer 6 (",
+                              paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
+                
+                if (length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
+                  ""
+                } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " marked white matter (",
+                              paste(layer_specific_gene_list_multiple $White_matter, collapse = ", "), ")."),
+                sep = "\n")
+              }
+            )
+          }
+          ))
       })
     }
   })
