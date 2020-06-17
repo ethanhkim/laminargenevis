@@ -8,7 +8,7 @@ library(dplyr)
 library(magrittr)
 library(HGNChelper)
 
-Zeng_Path <- here("Data", "Zeng et al", "Table S2.xlsx")
+Zeng_Path <- here("data", "raw", "Zeng et al", "Table S2.xlsx")
 
 Zeng_dataset <- read_xlsx(path = Zeng_Path, sheet = "Final1000New", skip=1)
 
@@ -57,5 +57,5 @@ Zeng_dataset_updated %>%
   group_by(Cortical.marker..human.) %>% 
   summarise(n())
 
-write_csv(Zeng_dataset_updated, './R Scripts/export_data/Cleaned_Zeng_dataset.csv')
-save(Zeng_dataset_updated, file = './R Scripts/export_data/Zeng_dataset_updated.Rdata')
+write_csv(Zeng_dataset_updated, here("data", "processed", "Zeng et al", "Cleaned_Zeng_dataset.csv"))
+save(Zeng_dataset_updated, file = here("data", "processed", "Zeng et al", "Cleaned_Zeng_dataset.Rdata"))
