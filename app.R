@@ -8,13 +8,15 @@ library(tibble)
 library(tidyr)
 library(dplyr)
 library(purrr)
-library(reshape2)
-source("./string_processing.R") 
-source("./data_processing.R")
-load('./data/processed/He_DS1_Human_averaged.Rdata', verbose = TRUE)
-load('./data/processed/Maynard_dataset_average.Rdata', verbose = TRUE)
-load('./data/processed/Compared_Layer_markers.Rdata', verbose = TRUE)
-load('./data/processed/Zeng_dataset_updated.Rdata', verbose = TRUE)
+library(stringr)
+library(here)
+source("string_processing.R") 
+source("data_processing.R")
+load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Zeng_dataset_updated.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Compared_Layer_markers.Rdata"), verbose = TRUE)
+
 
 # Define UI ----
 ui <- fluidPage(
@@ -127,8 +129,11 @@ server <- function(input, output, session) {
     
     if (input$selector == "Single") {
       output$Barplot <- renderPlotly({
-        p <- ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset)) +
-          geom_bar(stat = "identity", position = position_dodge(0.5), width = 0.5) + theme(axis.text.x = element_text(angle = 45)) +
+        p <- ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
+          geom_bar(stat = "identity", position = "dodge", width = 0.75) + theme(axis.text.x = element_text(angle = 45)) +
+          geom_text(aes(label = layer_label, group = Dataset, 
+                        vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
+                    position = position_dodge(width = 0.75)) +
           geom_hline(yintercept = 1.681020) +
           geom_hline(yintercept = -1.506113)
         p <- ggplotly(p)
@@ -209,21 +214,23 @@ server <- function(input, output, session) {
     } else {
       ## Multiple genes ----
       output$He_heatmap <- renderPlotly({
-        p <- ggplot(data = He_heatmap_data, mapping = aes(x = Cuts, y = Gene_symbol, fill = Z_score)) +
+        p <- ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu") +
           labs(y = "", x = "", title = "He et al Heatmap") +
-          labs(caption = "(based on data from He et al, 2017")
+          labs(caption = "(based on data from He et al, 2017)") +
+          geom_text(aes(label = layer_label))
         p <- ggplotly(p)      
         p
       })
       
       output$Maynard_heatmap <- renderPlotly({
-        p <- ggplot(data = Maynard_heatmap_data, mapping = aes(x = Cuts, y = Gene_symbol, fill = Z_score)) +
+        p <- ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu") +
           labs(y = "", x = "", title = "Maynard et al Heatmap",
-               caption = "(based on data from Maynard et al, 2020)")
+               caption = "(based on data from Maynard et al, 2020)") +
+          geom_text(aes(label = layer_label))
         p <- ggplotly(p)      
         p
       })

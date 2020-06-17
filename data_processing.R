@@ -7,12 +7,27 @@ process_heatmap_function <- function(source_dataset, input_genelist){
   source_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     distinct(gene_symbol, .keep_all = TRUE)  %>%
-    arrange(gene_symbol) %>%
-    column_to_rownames(var = "gene_symbol") %>%
-    t() %>%
-    melt() %>%
-    as_tibble() %>%
-    dplyr::rename(Cuts = "Var1", Gene_symbol = "Var2", Z_score = "value")
+    mutate_if(is.numeric,as.character, is.factor, as.character) %>%
+    pivot_longer(
+      Layer_1:WM,
+      names_to = "layer"
+    ) %>%
+    select(-"marker_label") %>%
+    # Create significance markers depending on if gene is marked in a specific layer
+    mutate(layer_label = 
+             case_when(
+               Layer_1_marker == layer ~ "*",
+               Layer_2_marker == layer ~ "*",
+               Layer_3_marker == layer ~ "*",
+               Layer_4_marker == layer ~ "*",
+               Layer_5_marker == layer ~ "*",
+               Layer_6_marker == layer ~ "*",
+               Layer_WM_marker == layer ~ "*"
+             )) %>%
+    select(gene_symbol, layer, value, layer_label) %>%
+    rename(Z_score = "value") %>%
+    mutate_at("Z_score", as.numeric) %>%
+    mutate_at("layer_label", ~replace(., is.na(.), ""))
 }
 
 ## Function to process barplot data ##
@@ -20,29 +35,47 @@ process_heatmap_function <- function(source_dataset, input_genelist){
 process_barplot_data <- function(input_genelist) {
   
   He_barplot_data <- He_DS1_Human_averaged %>%
-    dplyr::filter(gene_symbol %in% input_genelist)
+    dplyr::filter(gene_symbol %in% input_genelist) %>%
+    t() %>%
+    as_tibble(rownames = NA)
   Maynard_barplot_data <- Maynard_dataset_average %>%
-    dplyr::filter(gene_symbol %in% input_genelist)
+    dplyr::filter(gene_symbol %in% input_genelist) %>%
+    t() %>%
+    as_tibble(rownames = NA)
   
-  Barplot_data <- tibble(
-    "gene_symbol" = He_barplot_data$gene_symbol,
-    "He_Layer_1" = He_barplot_data$Layer_1, "He_Layer_2" = He_barplot_data$Layer_2,
-    "He_Layer_3" = He_barplot_data$Layer_3, "He_Layer_4" = He_barplot_data$Layer_4,
-    "He_Layer_5" = He_barplot_data$Layer_5, "He_Layer_6" = He_barplot_data$Layer_6,
-    "He_WM" = He_barplot_data$WM, 
-    "Maynard_Layer_1" = Maynard_barplot_data$Layer_1, "Maynard_Layer_2" = Maynard_barplot_data$Layer_2,
-    "Maynard_Layer_3" = Maynard_barplot_data$Layer_3, "Maynard_Layer_4" = Maynard_barplot_data$Layer_4,
-    "Maynard_Layer_5" = Maynard_barplot_data$Layer_5, "Maynard_Layer_6" = Maynard_barplot_data$Layer_6,
-    "Maynard_WM" = Maynard_barplot_data$WM) %>%
-    pivot_longer(cols = -gene_symbol, names_to = "Layers") %>%
+  Barplot_data <- He_barplot_data %>%
+    rownames_to_column(var = "variables") %>%
+    add_column("Maynard_data" = Maynard_barplot_data$V1) %>%
+    column_to_rownames(var = "variables") %>%
+    t() %>%
+    as_tibble(rownames = NA) %>% 
+    pivot_longer(cols = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6", "WM"),
+                 names_to = "layer") %>%
     dplyr::rename(Z_score = "value") %>%
-    mutate(Dataset = ifelse(test = str_detect(Layers, "He"),
+    add_column("layers" = c("He_Layer_1", "He_Layer_2", "He_Layer_3", "He_Layer_4", 
+                            "He_Layer_5", "He_Layer_6", "He_WM", "Maynard_Layer_1",
+                            "Maynard_Layer_2", "Maynard_Layer_3", "Maynard_Layer_4", 
+                            "Maynard_Layer_5", "Maynard_Layer_6","Maynard_WM")) %>%
+    mutate(layer_label = 
+             case_when(
+               Layer_1_marker == layer ~ "*",
+               Layer_2_marker == layer ~ "*",
+               Layer_3_marker == layer ~ "*",
+               Layer_4_marker == layer ~ "*",
+               Layer_5_marker == layer ~ "*",
+               Layer_6_marker == layer ~ "*",
+               Layer_WM_marker == layer ~ "*"
+             )) %>%
+    select(gene_symbol, layers, Z_score, layer_label) %>%
+    mutate_at("Z_score", as.numeric) %>%
+    mutate_at("layer_label", ~replace(., is.na(.), "")) %>%
+    mutate(Dataset = ifelse(test = str_detect(layers, "He"),
                             yes = "He",
                             no = "Maynard")) %>%
     mutate(Layer = case_when(
-      str_detect(Layers, "1") ~ "1", str_detect(Layers, "2") ~ "2", str_detect(Layers, "3") ~ "3",
-      str_detect(Layers, "4") ~ "4", str_detect(Layers, "5") ~ "5", str_detect(Layers, "6") ~ "6",
-      str_detect(Layers, "WM") ~ "WM"
+      str_detect(layers, "1") ~ "1", str_detect(layers, "2") ~ "2", str_detect(layers, "3") ~ "3",
+      str_detect(layers, "4") ~ "4", str_detect(layers, "5") ~ "5", str_detect(layers, "6") ~ "6",
+      str_detect(layers, "WM") ~ "WM"
     ))
 }
 
