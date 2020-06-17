@@ -82,3 +82,32 @@ He_DS1_averaged_by_layer <- tibble(
   Layer_6 = He_Layer6_averaged$mean,
   Layer_7 = He_WM_averaged$V17
 )
+<<<<<<< HEAD
+=======
+
+
+## Scale Layers ##
+
+He_values_scaled <- He_values %>%
+  dplyr::select(-"gene_symbol") %>%
+  t() %>%
+  scale() %>%
+  t() %>%
+  as_tibble() %>%
+  add_column(He_values$gene_symbol) %>%
+  rename(gene_symbol= "He_values$gene_symbol") %>%
+  dplyr::select("gene_symbol", everything())
+
+
+## Transpose data ##
+
+#Transpose table such that table represents the 17 separate cuts for each gene
+rownames(He_values) <- common_gene_list 
+He_values_transposed <- He_values %>%
+  dplyr::select(-"gene_symbol") %>%
+  t() %>%
+  as_tibble()
+
+
+
+>>>>>>> 4e70cfd78b048eb455440c3023a2e50d19d2e770
