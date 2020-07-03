@@ -5,6 +5,7 @@ library(ggplot2)
 library(magrittr)
 library(plotly)
 library(tibble)
+library(shinyjs)
 library(tidyr)
 library(dplyr)
 library(purrr)
@@ -20,6 +21,8 @@ load(here("data", "processed", "Compared_Layer_markers.Rdata"), verbose = TRUE)
 
 # Define UI ----
 ui <- fluidPage(
+  shinyjs::useShinyjs(),
+  tags$head(includeHTML("google-analytics.html")),
   navbarPage(title = "Gene Expression Profile Comparison",
              
              # Visualize gene expression across layers through heatmap or barplot    
@@ -216,7 +219,8 @@ server <- function(input, output, session) {
       output$He_heatmap <- renderPlotly({
         p <- ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") +
+          scale_fill_distiller(palette = "RdYlBu") + 
+          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "He et al Heatmap") +
           labs(caption = "(based on data from He et al, 2017)") +
           geom_text(aes(label = layer_label))
@@ -228,6 +232,7 @@ server <- function(input, output, session) {
         p <- ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu") +
+          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "Maynard et al Heatmap",
                caption = "(based on data from Maynard et al, 2020)") +
           geom_text(aes(label = layer_label))
