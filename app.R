@@ -10,6 +10,7 @@ library(dplyr)
 library(purrr)
 library(stringr)
 library(here)
+library(scales)
 source("string_processing.R") 
 source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
@@ -125,7 +126,7 @@ server <- function(input, output, session) {
     
     He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
-    Barplot_data <- process_barplot_data(selected_gene_list_single)
+    Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
     
     if (input$selector == "Single") {
       output$Barplot <- renderPlotly({
@@ -147,8 +148,14 @@ server <- function(input, output, session) {
       names(layer_specific_gene_list_single) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
                                                   "Layer 5", "Layer 6", "White_matter")
       
+      single_gene_cor <- single_gene_correlation(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
+      
       output$summary_single <- renderPrint({
         cat(paste0(
+          selected_gene_list_single,
+          " has a Pearson correlation value of ",
+          single_gene_cor,
+          " between the He and Maynard datasets.\n\n",
           selected_gene_list_single,
           " was found to be:\n\n",
           if (sum(selected_gene_list_single %in% unique(He_DS1_Human_averaged$gene_symbol)) == 0) {
@@ -242,12 +249,21 @@ server <- function(input, output, session) {
       names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
                                                     "Layer 5", "Layer 6", "White_matter")
       
+      He_Maynard_cor_diagonal <- dataset_correlation(He_DS1_Human_averaged, Maynard_dataset_average)
+      multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
+      multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
+      
       output$summary_multiple <- renderPrint({
         #count of intersection of submitted genes with total gene list
         cat(paste0(
           "Of the ",
           length(selected_gene_list_multiple),
           " input genes:\n\n",
+          "The genes had a mean Pearson correlation value of ",
+          multi_gene_cor,
+          ", which ranks in the ",
+          multi_gene_quantile,
+          "th quantile.\n\n",
           sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
           " were assayed by He et al.,\n",
           sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),

@@ -32,13 +32,13 @@ process_heatmap_function <- function(source_dataset, input_genelist){
 
 ## Function to process barplot data ##
 
-process_barplot_data <- function(input_genelist) {
+process_barplot_data <- function(input_genelist, dataset1, dataset2) {
   
-  He_barplot_data <- He_DS1_Human_averaged %>%
+  He_barplot_data <- dataset1 %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     t() %>%
     as_tibble(rownames = NA)
-  Maynard_barplot_data <- Maynard_dataset_average %>%
+  Maynard_barplot_data <- dataset2 %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     t() %>%
     as_tibble(rownames = NA)
@@ -97,3 +97,91 @@ separate_layers <- function(input_table, input_genelist) {
 }
 
 
+## Function for generating single-gene correlation across He & Maynard datasets
+
+single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
+  
+  He_gene <- He_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_gene) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  Maynard_gene <- Maynard_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_gene) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  He_Maynard_cormatrix <- cor(He_gene, Maynard_gene, method = "pearson") %>%
+    as_tibble(rownames = NA)
+  
+  He_Maynard_vector <- He_Maynard_cormatrix %>%
+    pull(var = 1) %>%
+    as.numeric()
+  
+  return(format(round(He_Maynard_vector, 2), nsmall = 2))
+}
+
+
+## Functions for generating multi-gene correlation across He & Maynard datasets
+
+dataset_correlation <- function(He_dataset, Maynard_dataset) {
+  
+  He_Maynard_common_gene_list <- intersect(He_dataset$gene_symbol, Maynard_dataset$gene_symbol)
+  
+  He_matrix <- He_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% He_Maynard_common_gene_list) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  Maynard_matrix <- Maynard_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% He_Maynard_common_gene_list) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  He_Maynard_cormatrix <- cor(He_matrix, Maynard_matrix, method = "pearson")
+  He_Maynard_diag <- diag(He_Maynard_cormatrix, names = TRUE)
+  
+  return(He_Maynard_diag)
+}
+
+multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
+  
+  He_genes <- He_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  Maynard_genes <- Maynard_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t() 
+ 
+  He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
+  He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE)
+  He_Maynard_diag_genes <- format(round(He_Maynard_diag_genes, 2), nsmall = 2) %>%
+    as_tibble() %>%
+    pull(var = 1) %>%
+    as.numeric() %>%
+    mean() 
+  
+  return(format(round(He_Maynard_diag_genes, 2), nsmall = 2))
+}
+
+
+## Function for generating 
+
+quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
+  
+  quantile_distribution <- ecdf(dataset_diagonal)
+  multiple_genes_quantile <- quantile_distribution(genes_diagonal)
+  
+  multiple_genes_quantile <- multiple_genes_quantile * 100
+  
+  return(format(floor(multiple_genes_quantile)))
+}
