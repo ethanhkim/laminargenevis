@@ -1,6 +1,3 @@
-library(reshape2)
-library(dplyr)
-
 ## Function to process heatmap data ##
 process_heatmap_function <- function(source_dataset, input_genelist){
   
@@ -124,29 +121,7 @@ single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
 }
 
 
-## Functions for generating multi-gene correlation across He & Maynard datasets
-
-dataset_correlation <- function(He_dataset, Maynard_dataset) {
-  
-  He_Maynard_common_gene_list <- intersect(He_dataset$gene_symbol, Maynard_dataset$gene_symbol)
-  
-  He_matrix <- He_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% He_Maynard_common_gene_list) %>%
-    column_to_rownames(var = "gene_symbol") %>%
-    t()
-  
-  Maynard_matrix <- Maynard_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% He_Maynard_common_gene_list) %>%
-    column_to_rownames(var = "gene_symbol") %>%
-    t()
-  
-  He_Maynard_cormatrix <- cor(He_matrix, Maynard_matrix, method = "pearson")
-  He_Maynard_diag <- diag(He_Maynard_cormatrix, names = TRUE)
-  
-  return(He_Maynard_diag)
-}
+## Function for generating multi-gene correlation across He & Maynard datasets
 
 multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
   
@@ -174,7 +149,7 @@ multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
 }
 
 
-## Function for generating 
+## Function for generating quantile
 
 quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
   
@@ -184,4 +159,78 @@ quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
   multiple_genes_quantile <- multiple_genes_quantile * 100
   
   return(format(floor(multiple_genes_quantile)))
+}
+
+
+
+## Function for Wilcoxon test
+
+wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
+
+  He_genes <- He_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  Maynard_genes <- Maynard_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t() 
+  
+  He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
+  He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE)
+  
+  wilcoxtest <- wilcox.test(He_Maynard_diag_genes, He_Maynard_diagonal)$p.value
+  
+  return(format(round(wilcoxtest, 4), nsmall = 4))
+}
+
+## Function to return indices used for AUROC
+
+return_indices <- function(ranked_dataset, selected_genelist) {
+  
+  Indices <- as_tibble(ranked_dataset$gene_symbol)
+  names(Indices) <- "gene_symbol"
+  Indices %<>% mutate(isTargetGene = gene_symbol %in% selected_genelist)
+  targetIndices <- Indices$isTargetGene
+  return(targetIndices)
+  
+}
+
+## Function for ranking datasets
+
+rank_dataset <- function(source_dataset) {
+  dataset_ranked <- source_dataset %>%
+    select(Layer_1:WM) %>%
+    map_df(rank)
+  dataset_ranked$gene_symbol <- source_dataset$gene_symbol
+  return(dataset_ranked)
+}
+
+## Function for AUROC
+
+# from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
+# by Sara Ballouz
+
+auroc_analytic <- function(scores, labels) {
+  
+  negatives <- which(labels == 0, arr.ind = TRUE)
+  scores[negatives] <- 0
+  
+  p <- sum(scores, na.rm = TRUE)
+  nL <- length(labels)
+  np <- sum(labels, na.rm = TRUE)
+  nn <- nL - np
+  
+  auroc <- (p/np - (np + 1)/2)/nn
+  
+  return(auroc)
+} 
+
+## Function for MWU for AUROC
+
+apply_MWU <- function(column, targetIndices) {
+  wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
 }

@@ -18,6 +18,7 @@ load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Zeng_dataset_updated.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Compared_Layer_markers.Rdata"), verbose = TRUE)
+load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
 
 
 # Define UI ----
@@ -26,86 +27,88 @@ ui <- fluidPage(
   tags$head(includeHTML("google-analytics.html")),
   navbarPage(title = "Gene Expression Profile Comparison",
              
-             # Visualize gene expression across layers through heatmap or barplot    
-             tabPanel(title = "Gene Visualization",
-                      sidebarLayout(
-                        sidebarPanel(
-                          # Input: Selector for which genes to visualize ----
-                          radioButtons(
-                            inputId = "selector", label =  "Single or multiple genes?",
-                            choices = c("Single", "Multiple")
-                          ),
-                          # Only show if Input is Single
-                          conditionalPanel(
-                            condition = "input.selector == 'Single'",
-                            selectizeInput(
-                              inputId = "genelist", label = "Input gene:", choices = NULL,
-                              selected = NULL, multiple = FALSE, options = NULL)
-                          ),
-                          # Only show if Input is Multiple          
-                          conditionalPanel(
-                            condition = "input.selector == 'Multiple'",
-                            textAreaInput(
-                              inputId = "multiple_genelist", 
-                              label = "Input your gene list:", 
-                              placeholder = "GAD1, CCK, GRIN1")
-                          ),
-                          
-                          # Submit button
-                          actionButton(inputId = "submit_heatmap", label = "Submit"),
-                          br(),
-                          br(),
-                          
-                        ),
+    # Visualize gene expression across layers through heatmap or barplot    
+    tabPanel(title = "Gene Visualization",
+      sidebarLayout(
+        sidebarPanel(
+          # Input: Selector for which genes to visualize ----
+          radioButtons(
+            inputId = "selector", label =  "Single or multiple genes?",
+            choices = c("Single", "Multiple")
+          ),
+          # Only show if Input is Single
+          conditionalPanel(
+            condition = "input.selector == 'Single'",
+            selectizeInput(
+              inputId = "genelist", label = "Input gene:", choices = NULL,
+              selected = NULL, multiple = FALSE, options = NULL)
+          ),
+          # Only show if Input is Multiple          
+          conditionalPanel(
+            condition = "input.selector == 'Multiple'",
+            textAreaInput(
+              inputId = "multiple_genelist", 
+              label = "Input your gene list:", 
+              placeholder = "GAD1, CCK, GRIN1")
+          ),
+          # Submit button
+          actionButton(inputId = "submit_heatmap", label = "Submit"),
+          
+          br(),
+          br(),
                         
-                        mainPanel(
-                          tabsetPanel(type = "tabs",
-                                      tabPanel("Dataset Overview",
-                                               br(),
-                                               h3("Welcome to the Gene Visualization project!"),
-                                               br(),
-                                               h4("This web application allows you to examine layer-specific gene expression
-                                                  across the cortex and determine layer annotations. "),
-                                               br(),
-                                               h4("The data for this application has been sourced from these following studies:"),
-                                               br(),
-                                               br(),
-                                               h3(a("Zeng et al. (2012)", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
-                                               h4("This study from the Allen Brain Institute examined 46 neurotypical brains and assayed roughly 1000 genes 
-                                                  through in-situ hybridization."),
-                                               br(),
-                                               h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
-                                               h4("This study assayed the whole genome using high-throughout RNA-seq."),
-                                               br(),
-                                               h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
-                                               h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform.")
-                                      ),
-                                      tabPanel("Gene Visualization",
-                                               # Only show if Input from checkboxGroupInput is Multiple - only shows rendered heatmaps
-                                               br(),
-                                               conditionalPanel(
-                                                 h3("Layer-specific Heatmaps"),
-                                                 condition = "input.selector == 'Multiple'",
-                                                 plotlyOutput("He_heatmap"),
-                                                 br(),
-                                                 br(),
-                                                 plotlyOutput("Maynard_heatmap"),
-                                                 br(),
-                                                 h4(verbatimTextOutput("summary_multiple"))),
-                                               # Only show if input from checkboxGroupInput is Single - only show layer-specific barplot
-                                               conditionalPanel(
-                                                 h3("Layer-specific gene expression"),
-                                                 condition = "input.selector == 'Single'",
-                                                 plotlyOutput("Barplot"),
-                                                 br(),
-                                                 h4(verbatimTextOutput("summary_single"))
-                                               )
-                                      )
-                          )
-                        )
-                      )
-             )
-             
+      ),
+                          
+        mainPanel(
+          tabsetPanel(type = "tabs",
+            tabPanel("Dataset Overview",
+              br(),
+              h3("Welcome to the Gene Visualization project!"),
+              br(),
+              h4("This web application allows you to examine layer-specific gene expression
+                across the cortex and determine layer annotations. "),
+              br(),
+              h4("The data for this application has been sourced from these following studies:"),
+              br(),
+              br(),
+              h3(a("Zeng et al. (2012)", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
+              h4("This study from the Allen Brain Institute examined 46 neurotypical brains and assayed roughly 1000 genes 
+                through in-situ hybridization."),
+              br(),
+              h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
+              h4("This study assayed the whole genome using high-throughout RNA-seq."),
+              br(),
+              h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
+              h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform.")
+            ),
+            tabPanel("Gene Visualization",
+             # Only show if Input from checkboxGroupInput is Multiple - only shows rendered heatmaps
+              br(),
+              conditionalPanel(
+                h3("Layer-specific Heatmaps"),
+                condition = "input.selector == 'Multiple'",
+                plotlyOutput("He_heatmap"),
+                br(),
+                br(),
+                plotlyOutput("Maynard_heatmap"),
+                br(),
+                h4(verbatimTextOutput("summary_multiple")),
+                br(),
+                dataTableOutput("table")
+              ),
+              # Only show if input from checkboxGroupInput is Single - only show layer-specific barplot
+              conditionalPanel(
+                h3("Layer-specific gene expression"),
+                condition = "input.selector == 'Single'",
+                plotlyOutput("Barplot"),
+                br(),
+                h4(verbatimTextOutput("summary_single"))
+              )
+            )
+          )
+        )
+      )
+    )
   )
 )
 
@@ -124,13 +127,16 @@ server <- function(input, output, session) {
   
   observeEvent(input$submit_heatmap, {
     
+    # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     
+    # Process dataset to correct format for heatmap and barplot
     He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
     Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
     
+    # Code for if a User selects "Single" gene:
     if (input$selector == "Single") {
       output$Barplot <- renderPlotly({
         p <- ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
@@ -144,10 +150,11 @@ server <- function(input, output, session) {
         p
       }) 
       
-      table <- layer_marker_table %>%
+      # Filter for selected genes from table containing Zeng layer marker annotations
+      layer_marker_table_single <- layer_marker_table %>%
         dplyr::filter(gene_symbol %in% selected_gene_list_single)
       
-      layer_specific_gene_list_single <- separate_layers(table, selected_gene_list_single)
+      layer_specific_gene_list_single <- separate_layers(layer_marker_table_single, selected_gene_list_single)
       names(layer_specific_gene_list_single) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
                                                   "Layer 5", "Layer 6", "White_matter")
       
@@ -223,6 +230,55 @@ server <- function(input, output, session) {
       
     } else {
       ## Multiple genes ----
+      
+      layer_marker_table_multiple <- layer_marker_table %>%
+        dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
+      layer_specific_gene_list_multiple <- separate_layers(layer_marker_table_multiple, selected_gene_list_multiple)
+      names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
+                                                    "Layer 5", "Layer 6", "White_matter")
+      
+      He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
+        pull(var = 1)
+      multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
+      multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
+      wilcoxtest_result <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
+      
+      ## Code for AUROC analysis adapted from Derek Howard & Leon French
+      
+      He_df <- rank_dataset(He_DS1_Human_averaged)
+      Maynard_df <- rank_dataset(Maynard_dataset_average)
+      
+      He_indices <- return_indices(He_df, selected_gene_list_multiple)
+      Maynard_indices <- return_indices(Maynard_df, selected_gene_list_multiple)
+      
+      He_df %<>% select(-gene_symbol)
+      Maynard_df %<>% select(-gene_symbol)
+      
+      AUROC_He <- map_df(He_df, auroc_analytic, He_indices)
+      wilcox_AUROC_He <- map_df(He_df, apply_MWU, He_indices)
+      AUROC_Maynard <- map_df(Maynard_df, auroc_analytic, Maynard_indices)
+      wilcox_AUROC_Maynard <- map_df(Maynard_df, apply_MWU, Maynard_indices)
+      
+      AUROC_table <- bind_cols(gather(AUROC_He, key = Layers, value = AUROC_He),
+                               gather(wilcox_AUROC_He, value = pValue),
+                               gather(AUROC_Maynard, key = Layers, value = AUROC_Maynard),
+                               gather(wilcox_AUROC_Maynard, value = pValue)) %>%
+        rename(Layers = Layers...1) %>%
+        rename(key = key...3) %>%
+        rename(pValue_He = pValue...4) %>%
+        rename(pValue_Maynard = pValue...8) %>%
+        select(Layers, AUROC_He, pValue_He, AUROC_Maynard, pValue_Maynard)
+      
+      
+      AUROC_table %<>% mutate(pValue_He = signif(pValue_He, digits = 3),
+                              pValue_Maynard = signif(pValue_Maynard, digits = 3),
+                              AUROC_He = signif(AUROC_He, digits = 3),
+                              AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
+                              adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
+                              adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3))
+      
+      # Heatmaps
+      
       output$He_heatmap <- renderPlotly({
         p <- ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
@@ -247,16 +303,13 @@ server <- function(input, output, session) {
         p
       })
       
-      table <- layer_marker_table %>%
-        dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
+      # AUROC table
       
-      layer_specific_gene_list_multiple <- separate_layers(table, selected_gene_list_multiple)
-      names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
-                                                    "Layer 5", "Layer 6", "White_matter")
+      output$table <- renderDataTable({
+        AUROC_table
+      }, escape = FALSE)
       
-      He_Maynard_cor_diagonal <- dataset_correlation(He_DS1_Human_averaged, Maynard_dataset_average)
-      multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
-      multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
+      # Summary textbox
       
       output$summary_multiple <- renderPrint({
         #count of intersection of submitted genes with total gene list
@@ -266,7 +319,9 @@ server <- function(input, output, session) {
           " input genes:\n\n",
           "The genes had a mean Pearson correlation value of ",
           multi_gene_cor,
-          ", which ranks in the ",
+          " (p = ",
+          wilcoxtest_result,
+          "), which ranks in the ",
           multi_gene_quantile,
           "th quantile.\n\n",
           sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
@@ -328,7 +383,7 @@ server <- function(input, output, session) {
               }
             )
           }
-          ))
+        ))
       })
     }
   })
