@@ -184,7 +184,11 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
   
   wilcoxtest <- wilcox.test(He_Maynard_diag_genes, He_Maynard_diagonal)$p.value
   
+<<<<<<< HEAD
   return(format(signif(wilcoxtest, digits = 4)))
+=======
+  return(format(round(wilcoxtest, 4), nsmall = 4))
+>>>>>>> d2e7eab0909f730ffdc4fd723053f8f2fd4d41cf
 }
 
 ## Function to return indices used for AUROC
