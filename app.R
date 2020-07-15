@@ -102,6 +102,9 @@ ui <- fluidPage(
                 condition = "input.selector == 'Single'",
                 plotlyOutput("Barplot"),
                 br(),
+                br(),
+                br(),
+                br(),
                 h4(verbatimTextOutput("summary_single"))
               )
             )
@@ -115,16 +118,22 @@ ui <- fluidPage(
 # Define server logic ----
 server <- function(input, output, session) {
   
+  # List of genes that are common through the He and Maynard datasets
   common_genelist <- intersect(He_DS1_Human_averaged$gene_symbol, Maynard_dataset_average$gene_symbol) %>%
     sort()
   
+  # Table of layer-marker annotations provided by Zeng et al.
   layer_marker_table <- Compared_Layer_Markers %>%
     filter(!is.na(layer_marker)) %>%
     filter(str_detect(source_dataset, 'Zeng'))
   
+  # The diagonal of the p-value correlation matrix of He and Maynard gene expression values 
+  He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
+    pull(var = 1)
+
   updateSelectizeInput(session, inputId = "genelist", 
                        choices = common_genelist, server = TRUE)
-  
+
   observeEvent(input$submit_heatmap, {
     
     # List of selected gene(s)
@@ -136,7 +145,7 @@ server <- function(input, output, session) {
     Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
     Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
     
-    # Code for if a User selects "Single" gene:
+    ## Single gene input:
     if (input$selector == "Single") {
       output$Barplot <- renderPlotly({
         p <- ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
@@ -145,8 +154,9 @@ server <- function(input, output, session) {
                         vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
                     position = position_dodge(width = 0.75)) +
           geom_hline(yintercept = 1.681020) +
-          geom_hline(yintercept = -1.506113)
-        p <- ggplotly(p)
+          geom_hline(yintercept = -1.506113) +
+          labs(caption = "Barplot of z-scored gene expression levels.")
+        p <- ggplotly(p, height = 400)
         p
       }) 
       
@@ -158,14 +168,22 @@ server <- function(input, output, session) {
       names(layer_specific_gene_list_single) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
                                                   "Layer 5", "Layer 6", "White_matter")
       
+      # Generate correlation value for single gene, the quantile and associated p-value
       single_gene_cor <- single_gene_correlation(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
+      single_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, single_gene_cor)
+      p_value_single_gene <- wilcoxtest(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
+      
       
       output$summary_single <- renderPrint({
         cat(paste0(
           selected_gene_list_single,
           " has a Pearson correlation value of ",
           single_gene_cor,
-          " between the He and Maynard datasets.\n\n",
+          " between the He and Maynard datasets, ranking in the ",
+          single_gene_quantile,
+          "th quantile (p = ",
+          p_value_single_gene,
+          ").\n\n",
           selected_gene_list_single,
           " was found to be:\n\n",
           if (sum(selected_gene_list_single %in% unique(He_DS1_Human_averaged$gene_symbol)) == 0) {
@@ -229,7 +247,7 @@ server <- function(input, output, session) {
       })
       
     } else {
-      ## Multiple genes ----
+      ## Multiple gene Input
       
       layer_marker_table_multiple <- layer_marker_table %>%
         dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
@@ -237,11 +255,12 @@ server <- function(input, output, session) {
       names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
                                                     "Layer 5", "Layer 6", "White_matter")
       
-      He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
-        pull(var = 1)
+      
+      # Generate correlation value for multiple gene and the quantile that value belongs in
+
       multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
       multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
-      wilcoxtest_result <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
+      p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
       
       ## Code for AUROC analysis adapted from Derek Howard & Leon French
       
@@ -269,13 +288,13 @@ server <- function(input, output, session) {
         rename(pValue_Maynard = pValue...8) %>%
         select(Layers, AUROC_He, pValue_He, AUROC_Maynard, pValue_Maynard)
       
-      
       AUROC_table %<>% mutate(pValue_He = signif(pValue_He, digits = 3),
                               pValue_Maynard = signif(pValue_Maynard, digits = 3),
                               AUROC_He = signif(AUROC_He, digits = 3),
                               AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
                               adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
-                              adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3))
+                              adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %<>%
+        select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard)
       
       # Heatmaps
       
@@ -320,7 +339,7 @@ server <- function(input, output, session) {
           "The genes had a mean Pearson correlation value of ",
           multi_gene_cor,
           " (p = ",
-          wilcoxtest_result,
+          p_value_multiple_gene,
           "), which ranks in the ",
           multi_gene_quantile,
           "th quantile.\n\n",

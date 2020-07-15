@@ -121,7 +121,29 @@ single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
 }
 
 
-## Function for generating multi-gene correlation across He & Maynard datasets
+## Function for generating gene correlations across He & Maynard datasets
+
+single_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
+  
+  He_gene <- He_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t()
+  
+  Maynard_gene <- Maynard_dataset %>%
+    select(gene_symbol:WM) %>%
+    filter(gene_symbol %in% input_genes) %>%
+    column_to_rownames(var = "gene_symbol") %>%
+    t() 
+  
+  He_Maynard_diag_gene <- cor(He_gene, Maynard_gene, method = "pearson") %>%
+    as_tibble() %>%
+    pull(var = 1) %>%
+    as.numeric()
+  
+  return(format(signif(He_Maynard_diag_gene, digits = 3)))
+}
 
 multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
   
@@ -155,16 +177,12 @@ quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
   
   quantile_distribution <- ecdf(dataset_diagonal)
   multiple_genes_quantile <- quantile_distribution(genes_diagonal)
-  
   multiple_genes_quantile <- multiple_genes_quantile * 100
   
   return(format(floor(multiple_genes_quantile)))
 }
 
-
-
 ## Function for Wilcoxon test
-
 wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
 
   He_genes <- He_dataset %>%
@@ -188,7 +206,6 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
 }
 
 ## Function to return indices used for AUROC
-
 return_indices <- function(ranked_dataset, selected_genelist) {
   
   Indices <- as_tibble(ranked_dataset$gene_symbol)
@@ -200,7 +217,6 @@ return_indices <- function(ranked_dataset, selected_genelist) {
 }
 
 ## Function for ranking datasets
-
 rank_dataset <- function(source_dataset) {
   dataset_ranked <- source_dataset %>%
     select(Layer_1:WM) %>%
@@ -210,7 +226,6 @@ rank_dataset <- function(source_dataset) {
 }
 
 ## Function for AUROC
-
 # from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
 # by Sara Ballouz
 
@@ -230,7 +245,6 @@ auroc_analytic <- function(scores, labels) {
 } 
 
 ## Function for MWU for AUROC
-
 apply_MWU <- function(column, targetIndices) {
   wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
 }
