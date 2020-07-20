@@ -1,3 +1,10 @@
+## Function to format Zeng dataset
+process_Zeng_dataset <- function(Zeng_dataset) {
+  Zeng_dataset %>%
+    filter(region == "V1") %>%
+    select("gene_symbol", "marker_annotation", "expression_level")
+}
+
 ## Function to process heatmap data ##
 process_heatmap_function <- function(source_dataset, input_genelist){
   
@@ -94,33 +101,6 @@ separate_layers <- function(input_table, input_genelist) {
 }
 
 
-## Function for generating single-gene correlation across He & Maynard datasets
-
-single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
-  
-  He_gene <- He_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_gene) %>%
-    column_to_rownames(var = "gene_symbol") %>%
-    t()
-  
-  Maynard_gene <- Maynard_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_gene) %>%
-    column_to_rownames(var = "gene_symbol") %>%
-    t()
-  
-  He_Maynard_cormatrix <- cor(He_gene, Maynard_gene, method = "pearson") %>%
-    as_tibble(rownames = NA)
-  
-  He_Maynard_vector <- He_Maynard_cormatrix %>%
-    pull(var = 1) %>%
-    as.numeric()
-  
-  return(format(round(He_Maynard_vector, 2), nsmall = 2))
-}
-
-
 ## Function for generating gene correlations across He & Maynard datasets
 
 single_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
@@ -205,46 +185,80 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
   return(format(signif(wilcoxtest, digits = 4)))
 }
 
-## Function to return indices used for AUROC
-return_indices <- function(ranked_dataset, selected_genelist) {
+## Overall function for AUROC and AUROC table:
+AUROC_function <- function(He_dataset, Maynard_dataset, multiple_genelist) {
   
-  Indices <- as_tibble(ranked_dataset$gene_symbol)
-  names(Indices) <- "gene_symbol"
-  Indices %<>% mutate(isTargetGene = gene_symbol %in% selected_genelist)
-  targetIndices <- Indices$isTargetGene
-  return(targetIndices)
+  #Function for ranking datasets
+  rank_dataset <- function(source_dataset) {
+    dataset_ranked <- source_dataset %>%
+      select(Layer_1:WM) %>%
+      map_df(rank)
+    dataset_ranked$gene_symbol <- source_dataset$gene_symbol
+    return(dataset_ranked)
+  }
   
-}
-
-## Function for ranking datasets
-rank_dataset <- function(source_dataset) {
-  dataset_ranked <- source_dataset %>%
-    select(Layer_1:WM) %>%
-    map_df(rank)
-  dataset_ranked$gene_symbol <- source_dataset$gene_symbol
-  return(dataset_ranked)
-}
-
-## Function for AUROC
-# from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
-# by Sara Ballouz
-
-auroc_analytic <- function(scores, labels) {
+  #Function to return indices 
+  return_indices <- function(ranked_dataset, multiple_genelist) {
+    
+    Indices <- as_tibble(ranked_dataset$gene_symbol)
+    names(Indices) <- "gene_symbol"
+    Indices %<>% mutate(isTargetGene = gene_symbol %in% multiple_genelist)
+    targetIndices <- Indices$isTargetGene
+    return(targetIndices)
+  }
   
-  negatives <- which(labels == 0, arr.ind = TRUE)
-  scores[negatives] <- 0
+  ## Function for AUROC
+  # from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
+  # by Sara Ballouz
+  auroc_analytic <- function(scores, labels) {
+    
+    negatives <- which(labels == 0, arr.ind = TRUE)
+    scores[negatives] <- 0
+    
+    p <- sum(scores, na.rm = TRUE)
+    nL <- length(labels)
+    np <- sum(labels, na.rm = TRUE)
+    nn <- nL - np
+    
+    auroc <- (p/np - (np + 1)/2)/nn
+    
+    return(auroc)
+  } 
   
-  p <- sum(scores, na.rm = TRUE)
-  nL <- length(labels)
-  np <- sum(labels, na.rm = TRUE)
-  nn <- nL - np
+  ## Function for MWU for AUROC
+  apply_MWU <- function(column, targetIndices) {
+    wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
+  }
   
-  auroc <- (p/np - (np + 1)/2)/nn
+  He_df <- rank_dataset(He_dataset)
+  Maynard_df <- rank_dataset(Maynard_dataset)
   
-  return(auroc)
-} 
-
-## Function for MWU for AUROC
-apply_MWU <- function(column, targetIndices) {
-  wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
+  He_indices <- return_indices(He_df, multiple_genelist)
+  Maynard_indices <- return_indices(Maynard_df, multiple_genelist)
+  
+  He_df %<>% select(-gene_symbol)
+  Maynard_df %<>% select(-gene_symbol)
+  
+  AUROC_He <- map_df(He_df, auroc_analytic, He_indices)
+  wilcox_AUROC_He <- map_df(He_df, apply_MWU, He_indices)
+  AUROC_Maynard <- map_df(Maynard_df, auroc_analytic, Maynard_indices)
+  wilcox_AUROC_Maynard <- map_df(Maynard_df, apply_MWU, Maynard_indices)
+  
+  # Create AUROC table for display
+  AUROC_table <- bind_cols(gather(AUROC_He, key = Layers, value = AUROC_He),
+                           gather(wilcox_AUROC_He, value = pValue),
+                           gather(AUROC_Maynard, key = Layers, value = AUROC_Maynard),
+                           gather(wilcox_AUROC_Maynard, value = pValue)) %>%
+    rename(Layers = Layers...1) %>%
+    rename(key = key...3) %>%
+    rename(pValue_He = pValue...4) %>%
+    rename(pValue_Maynard = pValue...8) %>%
+    select(Layers, AUROC_He, pValue_He, AUROC_Maynard, pValue_Maynard) %>% 
+    mutate(pValue_He = signif(pValue_He, digits = 3),
+           pValue_Maynard = signif(pValue_Maynard, digits = 3),
+           AUROC_He = signif(AUROC_He, digits = 3),
+           AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
+           adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
+           adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %>%
+    select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard)
 }

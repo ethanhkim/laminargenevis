@@ -16,7 +16,7 @@ source("string_processing.R")
 source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Zeng_dataset_updated.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Zeng_dataset_long.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Compared_Layer_markers.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
 
@@ -194,7 +194,7 @@ server <- function(input, output, session) {
             "Not assayed by Maynard et al.,\n"
           } else
             "Assayed by Maynard et al.,\n",
-          if (sum(selected_gene_list_single %in% unique(Zeng_dataset_updated$gene_symbol)) == 0) {
+          if (sum(selected_gene_list_single %in% unique(Zeng_dataset_long$gene_symbol)) == 0) {
             "Not assayed by Zeng et al.\n"
           } else {
             paste0(
@@ -262,39 +262,10 @@ server <- function(input, output, session) {
       multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
       p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
       
-      ## Code for AUROC analysis adapted from Derek Howard & Leon French
+      ## Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
       
-      He_df <- rank_dataset(He_DS1_Human_averaged)
-      Maynard_df <- rank_dataset(Maynard_dataset_average)
+      AUROC_table <- AUROC_function(He_DS1_Human_averaged, Maynard_dataset_average, selected_gene_list_multiple) 
       
-      He_indices <- return_indices(He_df, selected_gene_list_multiple)
-      Maynard_indices <- return_indices(Maynard_df, selected_gene_list_multiple)
-      
-      He_df %<>% select(-gene_symbol)
-      Maynard_df %<>% select(-gene_symbol)
-      
-      AUROC_He <- map_df(He_df, auroc_analytic, He_indices)
-      wilcox_AUROC_He <- map_df(He_df, apply_MWU, He_indices)
-      AUROC_Maynard <- map_df(Maynard_df, auroc_analytic, Maynard_indices)
-      wilcox_AUROC_Maynard <- map_df(Maynard_df, apply_MWU, Maynard_indices)
-      
-      AUROC_table <- bind_cols(gather(AUROC_He, key = Layers, value = AUROC_He),
-                               gather(wilcox_AUROC_He, value = pValue),
-                               gather(AUROC_Maynard, key = Layers, value = AUROC_Maynard),
-                               gather(wilcox_AUROC_Maynard, value = pValue)) %>%
-        rename(Layers = Layers...1) %>%
-        rename(key = key...3) %>%
-        rename(pValue_He = pValue...4) %>%
-        rename(pValue_Maynard = pValue...8) %>%
-        select(Layers, AUROC_He, pValue_He, AUROC_Maynard, pValue_Maynard)
-      
-      AUROC_table %<>% mutate(pValue_He = signif(pValue_He, digits = 3),
-                              pValue_Maynard = signif(pValue_Maynard, digits = 3),
-                              AUROC_He = signif(AUROC_He, digits = 3),
-                              AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
-                              adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
-                              adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %<>%
-        select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard)
       
       # Heatmaps
       
@@ -348,11 +319,11 @@ server <- function(input, output, session) {
           sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
           " were assayed by Maynard et al., \nand ",
           
-          if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_updated$gene_symbol)) == 0) {
+          if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)) == 0) {
             "0 genes were assayed by Zeng et al."
           } else {
             paste0(
-              sum(selected_gene_list_multiple %in% unique(Zeng_dataset_updated$gene_symbol)),
+              sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
               " were assayed by Zeng et al.\n\nIn the Zeng dataset:\n\n",
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
