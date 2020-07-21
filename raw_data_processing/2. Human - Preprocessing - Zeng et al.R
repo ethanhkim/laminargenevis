@@ -1,7 +1,8 @@
 #Adapted from https://github.com/jritch/mri_transcriptomics/blob/master/R%20Code/RunSingleGO.AUROC.Analysis.R
 
 #Load required libraries
-
+library(here)
+library(mygene)
 library(tidyverse)
 library(readxl)
 library(dplyr)
@@ -38,12 +39,18 @@ Zeng_dataset_cleaned <- Zeng_dataset_expanded %>%
   dplyr::filter(marker_annotation  != 'others' & marker_annotation != 'laminar' | is.na(NA))
 
 #Check if gene_symbol list is updated
-check_ZengList <- checkGeneSymbols(Zeng_dataset_cleaned$gene_symbol, unmapped.as.na = TRUE, map = NULL, 
-                                   species = "human")
+Zeng_dataset_cleaned 
+updated_symbols <- getGenes(Zeng_dataset_cleaned$entrez_id) %>% as.data.frame() %>%  select(entrez_id = entrezgene, updated_symbol = symbol)
 
-#Update gene_symbol list
+
+#Update gene_symbol list using mygene
 Zeng_dataset_updated <- Zeng_dataset_cleaned
-Zeng_dataset_updated$gene_symbol <- check_ZengList$Suggested.Symbol
+Zeng_dataset_updated %<>% mutate(entrez_id = as.character(entrez_id))
+#NCBI ID change for one gene 10571 -> 11039
+Zeng_dataset_updated %<>% mutate(entrez_id = if_else(entrez_id == "10571", "11039", entrez_id))
+Zeng_dataset_updated <- left_join(Zeng_dataset_updated , updated_symbols)
+Zeng_dataset_updated %<>% mutate(gene_symbol = if_else(!is.na(updated_symbol), updated_symbol, gene_symbol))
+Zeng_dataset_updated %<>% select(-updated_symbol)
 
 #Remove alternative names
 Zeng_dataset_updated$gene_symbol<- gsub("///.*","", Zeng_dataset_updated$gene_symbol)
@@ -70,5 +77,6 @@ Zeng_dataset_long %>%
   group_by(marker_annotation) %>% 
   summarise(n())
 
+dir.create(here("data", "processed", "Zeng et al"))
 write_csv(Zeng_dataset_updated, here("data", "processed", "Zeng et al", "Cleaned_Zeng_dataset.csv"))
 save(Zeng_dataset_updated, file = here("data", "processed", "Zeng et al", "Cleaned_Zeng_dataset.Rdata"))
