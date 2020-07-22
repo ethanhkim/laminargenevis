@@ -70,6 +70,7 @@ Zeng_dataset_long <- Zeng_dataset_updated %>%
   ) %>%
   mutate(region = gsub("V1_pattern", "V1", region)) %>%
   mutate(region = gsub("V2_pattern", "V2", region)) %>%
+  mutate(region = gsub("Temporal_pattern", "Temporal", region)) %>%
   select("gene_symbol", "entrez_id", "region", "expression_level", "marker_annotation", "original_annotation")
 
 #Summarize results
