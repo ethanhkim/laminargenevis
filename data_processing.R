@@ -5,10 +5,19 @@ process_Zeng_dataset <- function(Zeng_dataset) {
     select("gene_symbol", "marker_annotation", "expression_level")
 }
 
+## Function to generate height for heatmap ##
+heatmap_height <- function(genelist) {
+  if (length(genelist) <= 10) {
+    300
+  } else {
+    400
+  }
+}
+
 ## Function to process heatmap data ##
 process_heatmap_function <- function(source_dataset, input_genelist){
   
-  source_dataset %>%
+  processed_heatmap_data <- source_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     distinct(gene_symbol, .keep_all = TRUE)  %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
@@ -32,6 +41,24 @@ process_heatmap_function <- function(source_dataset, input_genelist){
     rename(Z_score = "value") %>%
     mutate_at("Z_score", as.numeric) %>%
     mutate_at("layer_label", ~replace(., is.na(.), ""))
+  
+  #Order data according to similarity in expression profile
+  ordered_data <- source_dataset %>%
+    dplyr::filter(gene_symbol %in% input_genelist) %>%
+    distinct(gene_symbol, .keep_all = TRUE)  %>%
+    mutate_if(is.numeric,as.character, is.factor, as.character) %>%
+    select("gene_symbol":"WM")
+  
+  ordered_data_matrix <- as.matrix(ordered_data)
+  rownames(ordered_data) <- ordered_data$gene_symbol
+  data_dendro <- as.dendrogram(hclust(d = dist(x = ordered_data_matrix)))
+  
+  data_order <- order.dendrogram(data_dendro)
+  
+  processed_heatmap_data$gene_symbol <- factor(x = processed_heatmap_data$gene_symbol,
+                                         levels = ordered_data$gene_symbol[data_order], 
+                                         ordered = TRUE)
+  return(processed_heatmap_data)
 }
 
 ## Function to process barplot data ##
@@ -262,3 +289,5 @@ AUROC_function <- function(He_dataset, Maynard_dataset, multiple_genelist) {
            adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %>%
     select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard)
 }
+
+

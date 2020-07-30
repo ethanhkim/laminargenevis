@@ -12,6 +12,7 @@ library(purrr)
 library(stringr)
 library(here)
 library(scales)
+library(ggdendro)
 source("string_processing.R") 
 source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
@@ -88,8 +89,6 @@ ui <- fluidPage(
                 h3("Layer-specific Heatmaps"),
                 condition = "input.selector == 'Multiple'",
                 plotlyOutput("He_heatmap"),
-                br(),
-                br(),
                 plotlyOutput("Maynard_heatmap"),
                 br(),
                 h4(verbatimTextOutput("summary_multiple")),
@@ -266,9 +265,8 @@ server <- function(input, output, session) {
       
       AUROC_table <- AUROC_function(He_DS1_Human_averaged, Maynard_dataset_average, selected_gene_list_multiple) 
       
-      
       # Heatmaps
-      
+      heatmapHeight <- heatmap_height(selected_gene_list_multiple)
       output$He_heatmap <- renderPlotly({
         p <- ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
@@ -277,7 +275,12 @@ server <- function(input, output, session) {
           labs(y = "", x = "", title = "He et al Heatmap") +
           labs(caption = "(based on data from He et al, 2017)") +
           geom_text(aes(label = layer_label))
-        p <- ggplotly(p)      
+        p <- ggplotly(p, height = heatmapHeight) %>% 
+          layout(title = list(text = paste0('He et al Heatmap',
+                                            '<br>',
+                                            '<sup>',
+                                            'based on data from He et al, 2017',
+                                            '</sup>')))
         p
       })
       
@@ -289,7 +292,12 @@ server <- function(input, output, session) {
           labs(y = "", x = "", title = "Maynard et al Heatmap",
                caption = "(based on data from Maynard et al, 2020)") +
           geom_text(aes(label = layer_label))
-        p <- ggplotly(p)      
+        p <- ggplotly(p, height = heatmapHeight) %>%
+          layout(title = list(text = paste0('Maynard et al Heatmap',
+                                           '<br>',
+                                           '<sup>',
+                                           'based on data from Maynard et al, 2017',
+                                           '</sup>')))
         p
       })
       
