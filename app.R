@@ -42,7 +42,8 @@ ui <- fluidPage(
             condition = "input.selector == 'Single'",
             selectizeInput(
               inputId = "genelist", label = "Input gene:", choices = NULL,
-              selected = NULL, multiple = FALSE, options = NULL)
+              selected = NULL, multiple = FALSE, options = NULL),
+            actionButton(inputId = "submit_barplot", label = "Submit")
           ),
           # Only show if Input is Multiple          
           conditionalPanel(
@@ -50,13 +51,9 @@ ui <- fluidPage(
             textAreaInput(
               inputId = "multiple_genelist", 
               label = "Input your gene list:", 
-              placeholder = "GAD1, CCK, GRIN1")
+              placeholder = "GAD1, CCK, GRIN1"),
+            actionButton(inputId = "submit_heatmap", label = "Submit")
           ),
-          # Submit button
-          actionButton(inputId = "submit_heatmap", label = "Submit"),
-          
-          br(),
-          br(),
                         
       ),
                           
@@ -88,8 +85,8 @@ ui <- fluidPage(
               conditionalPanel(
                 h3("Layer-specific Heatmaps"),
                 condition = "input.selector == 'Multiple'",
-                plotlyOutput("He_heatmap"),
-                plotlyOutput("Maynard_heatmap"),
+                plotOutput("He_heatmap"),
+                plotOutput("Maynard_heatmap"),
                 br(),
                 h4(verbatimTextOutput("summary_multiple")),
                 br(),
@@ -99,7 +96,7 @@ ui <- fluidPage(
               conditionalPanel(
                 h3("Layer-specific gene expression"),
                 condition = "input.selector == 'Single'",
-                plotlyOutput("Barplot"),
+                plotOutput("Barplot"),
                 br(),
                 br(),
                 br(),
@@ -133,21 +130,18 @@ server <- function(input, output, session) {
   updateSelectizeInput(session, inputId = "genelist", 
                        choices = common_genelist, server = TRUE)
 
-  observeEvent(input$submit_heatmap, {
+  observeEvent(input$submit_barplot, {
     
     # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
-    selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     
     # Process dataset to correct format for heatmap and barplot
-    He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, selected_gene_list_multiple)
-    Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
     Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
     
     ## Single gene input:
     if (input$selector == "Single") {
-      output$Barplot <- renderPlotly({
-        p <- ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
+      output$Barplot <- renderPlot({
+        ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
           geom_bar(stat = "identity", position = "dodge", width = 0.75) + theme(axis.text.x = element_text(angle = 45)) +
           geom_text(aes(label = layer_label, group = Dataset, 
                         vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
@@ -155,8 +149,6 @@ server <- function(input, output, session) {
           geom_hline(yintercept = 1.681020) +
           geom_hline(yintercept = -1.506113) +
           labs(caption = "Barplot of z-scored gene expression levels.")
-        p <- ggplotly(p, height = 400)
-        p
       }) 
       
       # Filter for selected genes from table containing Zeng layer marker annotations
@@ -245,147 +237,143 @@ server <- function(input, output, session) {
         ))
       })
       
-    } else {
-      ## Multiple gene Input
-      
-      layer_marker_table_multiple <- layer_marker_table %>%
-        dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
-      layer_specific_gene_list_multiple <- separate_layers(layer_marker_table_multiple, selected_gene_list_multiple)
-      names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
-                                                    "Layer 5", "Layer 6", "White_matter")
-      
-      
-      # Generate correlation value for multiple gene and the quantile that value belongs in
-
-      multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
-      multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
-      p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
-      
-      ## Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
-      
-      AUROC_table <- AUROC_function(He_DS1_Human_averaged, Maynard_dataset_average, selected_gene_list_multiple) 
-      
-      # Heatmaps
-      heatmapHeight <- heatmap_height(selected_gene_list_multiple)
-      output$He_heatmap <- renderPlotly({
-        p <- ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") + 
-          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "He et al Heatmap") +
-          labs(caption = "(based on data from He et al, 2017)") +
-          geom_text(aes(label = layer_label))
-        p <- ggplotly(p, height = heatmapHeight) %>% 
-          layout(title = list(text = paste0('He et al Heatmap',
-                                            '<br>',
-                                            '<sup>',
-                                            'based on data from He et al, 2017',
-                                            '</sup>')))
-        p
-      })
-      
-      output$Maynard_heatmap <- renderPlotly({
-        p <- ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") +
-          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "Maynard et al Heatmap",
-               caption = "(based on data from Maynard et al, 2020)") +
-          geom_text(aes(label = layer_label))
-        p <- ggplotly(p, height = heatmapHeight) %>%
-          layout(title = list(text = paste0('Maynard et al Heatmap',
-                                           '<br>',
-                                           '<sup>',
-                                           'based on data from Maynard et al, 2017',
-                                           '</sup>')))
-        p
-      })
-      
-      # AUROC table
-      
-      output$table <- renderDataTable({
-        AUROC_table
-      }, escape = FALSE)
-      
-      # Summary textbox
-      
-      output$summary_multiple <- renderPrint({
-        #count of intersection of submitted genes with total gene list
-        cat(paste0(
-          "Of the ",
-          length(selected_gene_list_multiple),
-          " input genes:\n\n",
-          "The genes had a mean Pearson correlation value of ",
-          multi_gene_cor,
-          " (p = ",
-          p_value_multiple_gene,
-          "), which ranks in the ",
-          multi_gene_quantile,
-          "th quantile.\n\n",
-          sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
-          " were assayed by He et al.,\n",
-          sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
-          " were assayed by Maynard et al., \nand ",
-          
-          if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)) == 0) {
-            "0 genes were assayed by Zeng et al."
-          } else {
-            paste0(
-              sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
-              " were assayed by Zeng et al.\n\nIn the Zeng dataset:\n\n",
+    } 
+  })
+    
+  observeEvent(input$submit_heatmap, {
+  
+    selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
+    
+    He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, selected_gene_list_multiple)
+    Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
+    
+    ## Multiple gene Input
+    
+    layer_marker_table_multiple <- layer_marker_table %>%
+      dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
+    layer_specific_gene_list_multiple <- separate_layers(layer_marker_table_multiple, selected_gene_list_multiple)
+    names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", "Layer 4",
+                                                  "Layer 5", "Layer 6")
+    
+    # Generate correlation value for multiple gene and the quantile that value belongs in
+    
+    multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average)
+    multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
+    p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, He_DS1_Human_averaged, Maynard_dataset_average, He_Maynard_cor_diagonal)
+    
+    ## Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
+    
+    AUROC_table <- AUROC_function(He_DS1_Human_averaged, Maynard_dataset_average, selected_gene_list_multiple) 
+    
+    # Heatmaps
+    heatmapHeight <- heatmap_height(selected_gene_list_multiple)
+    output$He_heatmap <- renderPlot({
+      ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
+        geom_tile() +
+        scale_fill_distiller(palette = "RdYlBu", limits = c(-1,1)*max(abs(He_heatmap_data$Z_score))) +
+        scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
+        labs(y = "", x = "", title = "He et al Heatmap") +
+        labs(caption = "(based on data from He et al, 2017)") +
+        #Puts stars on layer marker annotations
+        geom_text(aes(label = layer_label), size = 7, vjust = 1)
+    }, height = heatmapHeight)
+    
+    output$Maynard_heatmap <- renderPlot({
+      ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
+        geom_tile() +
+        scale_fill_distiller(palette = "RdYlBu", limits = c(-1,1)*max(abs(Maynard_heatmap_data$Z_score))) +
+        scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
+        labs(y = "", x = "", title = "Maynard et al Heatmap",
+             caption = "(based on data from Maynard et al, 2020)") +
+        #Puts stars on layer marker annotations
+        geom_text(aes(label = layer_label), size = 7, vjust = 1)
+    }, height = heatmapHeight)
+    
+    # AUROC table
+    
+    output$table <- renderDataTable({
+      AUROC_table
+    }, escape = FALSE)
+    
+    # Summary textbox
+    
+    output$summary_multiple <- renderPrint({
+      #count of intersection of submitted genes with total gene list
+      cat(paste0(
+        "Of the ",
+        length(selected_gene_list_multiple),
+        " input genes:\n\n",
+        "The genes had a mean Pearson correlation value of ",
+        multi_gene_cor,
+        " (p = ",
+        p_value_multiple_gene,
+        "), which ranks in the ",
+        multi_gene_quantile,
+        "th quantile.\n\n",
+        sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
+        " were assayed by He et al.,\n",
+        sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
+        " were assayed by Maynard et al., \nand ",
+        
+        if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)) == 0) {
+          "0 genes were assayed by Zeng et al."
+        } else {
+          paste0(
+            sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
+            " were assayed by Zeng et al.\n\nIn the Zeng dataset:\n\n",
+            
+            if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
+                length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0 &
+                length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0 &
+                length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0 & 
+                length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0 &
+                length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0 &
+                length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
+              "No genes were found to mark any layer."
+            } else {
+              paste0( if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," marked layer 1 (", 
+                            paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
               
-              if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
-                  length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0 &
-                  length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0 &
-                  length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0 & 
-                  length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0 &
-                  length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0 &
-                  length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
-                "No genes were found to mark any layer."
-              } else {
-                paste0( if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," marked layer 1 (", 
-                              paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " marked layer 2 (", 
-                              paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " marked layer 3 (",
-                              paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " marked layer 4 (",
-                              paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " marked layer 5 (",
-                              paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " marked layer 6 (",
-                              paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
-                
-                if (length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
-                  ""
-                } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " marked white matter (",
-                              paste(layer_specific_gene_list_multiple $White_matter, collapse = ", "), ")."),
-                sep = "\n")
-              }
-            )
-          }
-        ))
-      })
-    }
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " marked layer 2 (", 
+                            paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
+              
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " marked layer 3 (",
+                            paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
+              
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " marked layer 4 (",
+                            paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
+              
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " marked layer 5 (",
+                            paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
+              
+              if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " marked layer 6 (",
+                            paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
+              
+              if (length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
+                ""
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " marked white matter (",
+                            paste(layer_specific_gene_list_multiple $White_matter, collapse = ", "), ")."),
+              sep = "\n")
+            }
+          )
+        }
+      ))
+    })
   })
 }
+
 
 
 # Run the app ----

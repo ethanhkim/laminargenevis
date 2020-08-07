@@ -22,7 +22,7 @@ process_heatmap_function <- function(source_dataset, input_genelist){
     distinct(gene_symbol, .keep_all = TRUE)  %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
     pivot_longer(
-      Layer_1:WM,
+      Layer_1:Layer_6,
       names_to = "layer"
     ) %>%
     select(-"marker_label") %>%
@@ -34,8 +34,7 @@ process_heatmap_function <- function(source_dataset, input_genelist){
                Layer_3_marker == layer ~ "*",
                Layer_4_marker == layer ~ "*",
                Layer_5_marker == layer ~ "*",
-               Layer_6_marker == layer ~ "*",
-               Layer_WM_marker == layer ~ "*"
+               Layer_6_marker == layer ~ "*"
              )) %>%
     select(gene_symbol, layer, value, layer_label) %>%
     rename(Z_score = "value") %>%
