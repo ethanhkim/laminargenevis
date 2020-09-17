@@ -13,6 +13,9 @@ library(stringr)
 library(here)
 library(scales)
 library(ggdendro)
+library(data.table)
+library(shinycssloaders)
+library(DT)
 source("string_processing.R") 
 source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
@@ -26,18 +29,18 @@ load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   tags$head(includeHTML("google-analytics.html")),
-  navbarPage(title = "Gene Expression Profile Comparison",
+  navbarPage(title = "Gene Expression Profile Comparison", 
              
     # Visualize gene expression across layers through heatmap or barplot    
     tabPanel(title = "Gene Visualization",
       sidebarLayout(
         sidebarPanel(
-          # Input: Selector for which genes to visualize ----
+          # Input: Selector for which genes to visualize
           radioButtons(
             inputId = "selector", label =  "Single or multiple genes?",
             choices = c("Single", "Multiple")
           ),
-          # Only show if Input is Single
+          # UI - Single Input  ----
           conditionalPanel(
             condition = "input.selector == 'Single'",
             selectizeInput(
@@ -45,21 +48,26 @@ ui <- fluidPage(
               selected = NULL, multiple = FALSE, options = NULL),
             actionButton(inputId = "submit_barplot", label = "Submit")
           ),
-          # Only show if Input is Multiple          
+          # UI - Multiple Input ----     
           conditionalPanel(
             condition = "input.selector == 'Multiple'",
             textAreaInput(
               inputId = "multiple_genelist", 
               label = "Input your gene list:", 
               placeholder = "GAD1, CCK, GRIN1"),
+            selectInput(
+              inputId = "region_label_choice",
+              label = "Choose a region to examine with scRNA-seq data:",
+              choices = c("A1C", "MTG", "V1C", "CgG", "M1lm", "M1ul", "S1lm", "S1ul")
+            ),
             actionButton(inputId = "submit_heatmap", label = "Submit")
           ),
                         
-      ),
+        ),
                           
         mainPanel(
-          tabsetPanel(type = "tabs",
-            tabPanel("Dataset Overview",
+          tabsetPanel(type = "tabs", id = "tabset",
+            tabPanel(title = "Dataset Overview", value = "overview",
               br(),
               h3("Welcome to the Gene Visualization project!"),
               br(),
@@ -74,29 +82,40 @@ ui <- fluidPage(
                 through in-situ hybridization."),
               br(),
               h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
-              h4("This study assayed the whole genome using high-throughout RNA-seq."),
+              h4("This study assayed the whole genome using high-throughput RNA-seq."),
               br(),
               h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
               h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform.")
             ),
-            tabPanel("Gene Visualization",
-             # Only show if Input from checkboxGroupInput is Multiple - only shows rendered heatmaps
+            tabPanel(title = "Gene Visualization", value = "visualization",
+             # Multiple Input - Heatmaps and AUC ----
               br(),
               conditionalPanel(
-                h3("Layer-specific Heatmaps"),
+                h4("Layer-specific Heatmaps"),
                 condition = "input.selector == 'Multiple'",
-                plotOutput("He_heatmap"),
-                plotOutput("Maynard_heatmap"),
+                br(),
+                plotOutput("He_heatmap", height = "auto") %>% withSpinner(),
+                plotOutput("Maynard_heatmap", height = "auto") %>% withSpinner(),
+                br(),
+                h5(textOutput("heatmap_caption")),
                 br(),
                 h4(verbatimTextOutput("summary_multiple")),
                 br(),
-                dataTableOutput("table")
+                br(),
+                DT::dataTableOutput("table", width = "100%", height = "auto") %>% withSpinner(),
+                br(),
+                br(),
+                br(),
+                plotOutput("scRNA_barplot", height = "800px") %>% withSpinner(),
+                h5(textOutput("scRNA_caption")),
+                br(),
+                br(),
               ),
-              # Only show if input from checkboxGroupInput is Single - only show layer-specific barplot
+              # Single Input - Barplot ----
               conditionalPanel(
                 h3("Layer-specific gene expression"),
                 condition = "input.selector == 'Single'",
-                plotOutput("Barplot"),
+                plotOutput("Barplot") %>% withSpinner(),
                 br(),
                 br(),
                 br(),
@@ -111,9 +130,10 @@ ui <- fluidPage(
   )
 )
 
+
 # Define server logic ----
 server <- function(input, output, session) {
-  
+
   # List of genes that are common through the He and Maynard datasets
   common_genelist <- intersect(He_DS1_Human_averaged$gene_symbol, Maynard_dataset_average$gene_symbol) %>%
     sort()
@@ -129,9 +149,20 @@ server <- function(input, output, session) {
 
   updateSelectizeInput(session, inputId = "genelist", 
                        choices = common_genelist, server = TRUE)
+  
+  #Hide plots until when genes are submitted
+  output$Barplot <- NULL
+  output$He_heatmap <- NULL
+  output$Maynard_heatmap <- NULL 
+  output$heatmap_caption <- NULL
+  output$table <- DT::renderDT(NULL)
+  output$scRNA_barplot <- NULL
+  output$scRNA_caption <- NULL
 
+  # Single gene input ----
   observeEvent(input$submit_barplot, {
-    
+    updateTabsetPanel(session, "tabset", selected = "visualization")
+
     # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     
@@ -148,7 +179,7 @@ server <- function(input, output, session) {
                     position = position_dodge(width = 0.75)) +
           geom_hline(yintercept = 1.681020) +
           geom_hline(yintercept = -1.506113) +
-          labs(caption = "Barplot of z-scored gene expression levels.")
+          labs(caption = "Barplot of z-scored gene expression levels.") 
       }) 
       
       # Filter for selected genes from table containing Zeng layer marker annotations
@@ -167,6 +198,7 @@ server <- function(input, output, session) {
       
       output$summary_single <- renderPrint({
         cat(paste0(
+          "Between the He and Maynard data, ",
           selected_gene_list_single,
           " has a Pearson correlation value of ",
           single_gene_cor,
@@ -239,13 +271,18 @@ server <- function(input, output, session) {
       
     } 
   })
-    
-  observeEvent(input$submit_heatmap, {
   
+  # Multiple gene input ----
+  observeEvent(input$submit_heatmap, {
+    updateTabsetPanel(session, "tabset", selected = "visualization")
+
+    # Input genes
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
-    
+    # Process He & Maynar data according to input genes
     He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, selected_gene_list_multiple)
+    # Input area (for scRNA)
+    selected_scRNA_region <- input$region_label_choice
     
     ## Multiple gene Input
     
@@ -265,7 +302,7 @@ server <- function(input, output, session) {
     
     AUROC_table <- AUROC_function(He_DS1_Human_averaged, Maynard_dataset_average, selected_gene_list_multiple) 
     
-    # Heatmaps
+    # Heatmaps ----
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
     output$He_heatmap <- renderPlot({
       ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
@@ -273,7 +310,6 @@ server <- function(input, output, session) {
         scale_fill_distiller(palette = "RdYlBu", limits = c(-1,1)*max(abs(He_heatmap_data$Z_score))) +
         scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
         labs(y = "", x = "", title = "He et al Heatmap") +
-        labs(caption = "(based on data from He et al, 2017)") +
         #Puts stars on layer marker annotations
         geom_text(aes(label = layer_label), size = 7, vjust = 1)
     }, height = heatmapHeight)
@@ -283,27 +319,41 @@ server <- function(input, output, session) {
         geom_tile() +
         scale_fill_distiller(palette = "RdYlBu", limits = c(-1,1)*max(abs(Maynard_heatmap_data$Z_score))) +
         scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-        labs(y = "", x = "", title = "Maynard et al Heatmap",
-             caption = "(based on data from Maynard et al, 2020)") +
+        labs(y = "", x = "", title = "Maynard et al Heatmap") +
         #Puts stars on layer marker annotations
         geom_text(aes(label = layer_label), size = 7, vjust = 1)
     }, height = heatmapHeight)
     
-    # AUROC table
+    output$heatmap_caption <- renderPrint({
+      cat(paste("Fig 1. The heatmaps were created using the data from He et al and Maynard et al studies. The raw 
+                RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
+                source paper denoted the gene to be highly enriched within the specific cortical layer."))
+    })
     
-    output$table <- renderDataTable({
+    output$scRNA_caption <- renderPrint({
+      cat(paste("Fig 2. The barplots were created using the scRNA-seq data from the Allen Brain Institute. The 
+                data is filtered by the chosen region and the data was normalized by on a per-gene basis. The median of 
+                the normalized data was then calculated per gene."))
+    })
+    
+    # AUROC table ----
+    output$table <- DT::renderDataTable({
       AUROC_table
-    }, escape = FALSE)
+    }, escape = FALSE, )
     
-    # Summary textbox
+    #output$AUC_table_caption <- renderPrint({
+      #cat(paste("Table 1. The layers were ranked in each dataset with respect to the gene expression of the chosen genes, and
+                #the AUC score was calculated per layer. P-values were calcuated using the Mann-Whitney U test."))
+    #})
     
+    # Summary textbox ----
     output$summary_multiple <- renderPrint({
       #count of intersection of submitted genes with total gene list
       cat(paste0(
-        "Of the ",
+        "You inputted ",
         length(selected_gene_list_multiple),
-        " input genes:\n\n",
-        "The genes had a mean Pearson correlation value of ",
+        " genes. Of those genes:\n\n",
+        "It was found that between the He and Maynard datasets, the genes had a mean Pearson correlation value of ",
         multi_gene_cor,
         " (p = ",
         p_value_multiple_gene,
@@ -311,16 +361,16 @@ server <- function(input, output, session) {
         multi_gene_quantile,
         "th quantile.\n\n",
         sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
-        " were assayed by He et al.,\n",
+        " genes were assayed by He et al., ",
         sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
-        " were assayed by Maynard et al., \nand ",
+        "  were assayed by Maynard et al., and ",
         
         if (sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)) == 0) {
-          "0 genes were assayed by Zeng et al."
+          "0 were assayed by Zeng et al."
         } else {
           paste0(
             sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
-            " were assayed by Zeng et al.\n\nIn the Zeng dataset:\n\n",
+            " were assayed by Zeng et al.\n\nSpecifically in the Zeng dataset:\n\n",
             
             if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
                 length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0 &
@@ -333,43 +383,51 @@ server <- function(input, output, session) {
             } else {
               paste0( if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," marked layer 1 (", 
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," gene(s) marked layer 1 (", 
                             paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " marked layer 2 (", 
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " gene(s) marked layer 2 (", 
                             paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " marked layer 3 (",
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " gene(s) marked layer 3 (",
                             paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " marked layer 4 (",
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " gene(s) marked layer 4 (",
                             paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " marked layer 5 (",
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " gene(s) marked layer 5 (",
                             paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " marked layer 6 (",
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " gene(s) marked layer 6 (",
                             paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
               
               if (length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
                 ""
-              } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " marked white matter (",
+              } else paste0(length(unlist(layer_specific_gene_list_multiple $White_matter)), " gene(s) marked white matter (",
                             paste(layer_specific_gene_list_multiple $White_matter, collapse = ", "), ")."),
               sep = "\n")
             }
           )
         }
       ))
+    })
+    
+    # scRNA barplot ----
+    scRNA_matrix <- load_scRNA_region(selected_scRNA_region, selected_gene_list_multiple)
+    output$scRNA_barplot <- renderPlot({
+      ggplot(data = scRNA_matrix, mapping = aes(x = class_label, y = median_exp_value, fill = gene)) +
+        geom_col(position = "dodge") +
+        facet_wrap( ~ cortical_layer_label, ncol = 2)
     })
   })
 }

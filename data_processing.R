@@ -19,7 +19,14 @@ process_heatmap_function <- function(source_dataset, input_genelist){
   
   processed_heatmap_data <- source_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
-    distinct(gene_symbol, .keep_all = TRUE)  %>%
+    distinct(gene_symbol, .keep_all = TRUE) %>%
+    as.matrix()
+  
+  processed_heatmap_data[is.nan(processed_heatmap_data)] <- 0
+  
+  processed_heatmap_data %<>% 
+    as_tibble() %>%
+    filter_at(vars(Layer_1, Layer_2, Layer_3, Layer_4, Layer_5, Layer_6, WM),all_vars(!is.na(.))) %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
     pivot_longer(
       Layer_1:Layer_6,
@@ -44,7 +51,16 @@ process_heatmap_function <- function(source_dataset, input_genelist){
   #Order data according to similarity in expression profile
   ordered_data <- source_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
-    distinct(gene_symbol, .keep_all = TRUE)  %>%
+    distinct(gene_symbol, .keep_all = TRUE) %>%
+    replace_na(list(
+      Layer_1 = 0,
+      Layer_2 = 0,
+      Layer_3 = 0,
+      Layer_4 = 0,
+      Layer_5 = 0,
+      Layer_6 = 0,
+      WM = 0
+    )) %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
     select("gene_symbol":"WM")
   
@@ -55,8 +71,9 @@ process_heatmap_function <- function(source_dataset, input_genelist){
   data_order <- order.dendrogram(data_dendro)
   
   processed_heatmap_data$gene_symbol <- factor(x = processed_heatmap_data$gene_symbol,
-                                         levels = ordered_data$gene_symbol[data_order], 
-                                         ordered = TRUE)
+                                               levels = ordered_data$gene_symbol[data_order], 
+                                               ordered = TRUE)
+  
   return(processed_heatmap_data)
 }
 
@@ -127,7 +144,7 @@ separate_layers <- function(input_table, input_genelist) {
 }
 
 
-## Function for generating gene correlations across He & Maynard datasets
+## Functions for generating singe or multi-gene correlations across He & Maynard datasets
 
 single_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
   
@@ -157,23 +174,22 @@ multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
     select(gene_symbol:WM) %>%
     filter(gene_symbol %in% input_genes) %>%
     column_to_rownames(var = "gene_symbol") %>%
+    filter(across(everything(), ~ !is.na(.))) %>%
     t()
   
   Maynard_genes <- Maynard_dataset %>%
     select(gene_symbol:WM) %>%
     filter(gene_symbol %in% input_genes) %>%
     column_to_rownames(var = "gene_symbol") %>%
+    filter(across(everything(), ~ !is.na(.))) %>%
     t() 
- 
+  
   He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
-  He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE)
-  He_Maynard_diag_genes <- format(round(He_Maynard_diag_genes, 2), nsmall = 2) %>%
-    as_tibble() %>%
-    pull(var = 1) %>%
-    as.numeric() %>%
+  He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE) %>%
+    #mean correlation value of all genes included
     mean() 
   
-  return(format(round(He_Maynard_diag_genes, 2), nsmall = 2))
+  return(format(round(He_Maynard_diag_genes, 3), nsmall = 3))
 }
 
 
@@ -286,7 +302,39 @@ AUROC_function <- function(He_dataset, Maynard_dataset, multiple_genelist) {
            AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
            adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
            adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %>%
-    select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard)
+    select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard) %>%
+    rename("AUROC (He)" = AUROC_He,
+           "p-value (He)" = pValue_He,
+           "Adjusted p-value (He)" = adjusted_P_He,
+           "AUROC (Maynard)" = AUROC_Maynard,
+           "p-value (Maynard)" = pValue_Maynard,
+           "Adjusted p-value (Maynard)" = adjusted_P_Maynard)
 }
 
+## Function for generating Allen scRNA-seq barplots
+load_scRNA_region <- function(selected_region, selected_multiple_genelist) {
+  
+  genelist <- selected_multiple_genelist
+  matrix <- if (selected_region == "A1C") {
+    fread(here("data", "processed", "Allen_scRNA", "A1C_matrix.csv"))
+  } else if (selected_region == "MTG") {
+    fread(here("data", "processed", "Allen_scRNA", "MTG_matrix.csv"))
+  } else if (selected_region == "V1C") {
+    fread(here("data", "processed", "Allen_scRNA", "V1C_matrix.csv"))
+  } else if (selected_region == "CgG") {
+    fread(here("data", "processed", "Allen_scRNA", "CgG_matrix.csv"))
+  } else if (selected_region == "M1lm") {
+    fread(here("data", "processed", "Allen_scRNA", "M1lm_matrix.csv"))
+  } else if (selected_region == "M1ul") {
+    fread(here("data", "processed", "Allen_scRNA", "M1ul_matrix.csv"))
+  } else if (selected_region == "S1lm") {
+    fread(here("data", "processed", "Allen_scRNA", "S1lm_matrix.csv"))
+  } else fread(here("data", "processed", "Allen_scRNA", "S1ul_matrix.csv"))
+  
+  matrix %<>%
+    filter(gene %in% selected_multiple_genelist) 
+
+}
+
+  
 
