@@ -118,6 +118,7 @@ ui <- fluidPage(
                 plotOutput("Barplot") %>% withSpinner(),
                 br(),
                 br(),
+                h5(textOutput("barplot_caption")),
                 br(),
                 br(),
                 h4(verbatimTextOutput("summary_single"))
@@ -169,7 +170,7 @@ server <- function(input, output, session) {
     # Process dataset to correct format for heatmap and barplot
     Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
     
-    ## Single gene input:
+    # Barplot----
     if (input$selector == "Single") {
       output$Barplot <- renderPlot({
         ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
@@ -178,9 +179,15 @@ server <- function(input, output, session) {
                         vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
                     position = position_dodge(width = 0.75)) +
           geom_hline(yintercept = 1.681020) +
-          geom_hline(yintercept = -1.506113) +
-          labs(caption = "Barplot of z-scored gene expression levels.") 
+          geom_hline(yintercept = -1.506113)  
       }) 
+      
+      output$barplot_caption <- renderPrint({
+        cat(paste("Fig 1. The barplots were created using the data from He et al and Maynard et al studies. The raw 
+                RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
+                source paper denoted the gene to be highly enriched within the specific cortical layer. The horizontal lines
+                represent the value of the top (95th) and bottom (5th) quantile of expression levels across both datasets."))
+      })
       
       # Filter for selected genes from table containing Zeng layer marker annotations
       layer_marker_table_single <- layer_marker_table %>%
@@ -354,7 +361,7 @@ server <- function(input, output, session) {
         multi_gene_cor,
         " (p = ",
         p_value_multiple_gene,
-        "), which ranks in the ",
+        "), which\nranks in the ",
         multi_gene_quantile,
         "th quantile.\n\n",
         "Specifically in the Zeng dataset: \n\n",
