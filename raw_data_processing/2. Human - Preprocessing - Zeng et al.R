@@ -8,6 +8,8 @@ library(readxl)
 library(dplyr)
 library(magrittr)
 library(HGNChelper)
+library(conflicted)
+conflict_prefer("select", "dplyr")
 
 Zeng_Path <- here("data", "raw", "Zeng et al", "Table S2.xlsx")
 
@@ -40,7 +42,7 @@ Zeng_dataset_cleaned <- Zeng_dataset_expanded %>%
 
 #Check if gene_symbol list is updated
 Zeng_dataset_cleaned 
-updated_symbols <- getGenes(Zeng_dataset_cleaned$entrez_id) %>% as.data.frame() %>%  select(entrez_id = entrezgene, updated_symbol = symbol)
+updated_symbols <- getGenes(Zeng_dataset_cleaned$entrez_id) %>% as.data.frame() %>% select(entrez_id = entrezgene, updated_symbol = symbol)
 
 
 #Update gene_symbol list using mygene

@@ -10,11 +10,7 @@ library(dplyr)
 library(HGNChelper)
 
 ## DS1 ##
-<<<<<<< HEAD
 He_DS1_Human <- read.table(here("data", "raw", "He et al", "tab.average_RPKM_section_human.tsv"))
-=======
-He_DS1_Human <- read.table(here("Data", "He et al", "tab.average_RPKM_section_human.tsv"))
->>>>>>> 4e70cfd78b048eb455440c3023a2e50d19d2e770
 
 #Truncate the version numbers on ENSEMBL ID
 He_DS1_Human$V1 <- gsub("\\.\\d+$", "", He_DS1_Human$V1)
@@ -47,8 +43,6 @@ He_DS1_Human <- He_DS1_Human %>%
   #Remove duplicates
   distinct(gene_symbol, .keep_all = TRUE)
 
-<<<<<<< HEAD
-=======
 
 
 ## DS2 ##
@@ -70,6 +64,3 @@ DS2_Human <- DS2_Human %>%
 
 
 
-
-
->>>>>>> 4e70cfd78b048eb455440c3023a2e50d19d2e770
