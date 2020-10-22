@@ -32,109 +32,107 @@ ui <- fluidPage(
   tags$head(includeHTML("google-analytics.html")),
   navbarPage(title = "Gene Expression Profile Comparison", 
              
-             # Visualize gene expression across layers through heatmap or barplot    
-             tabPanel(title = "Gene Visualization",
-                      sidebarLayout(
-                        sidebarPanel(
-                          # Single or multiple gene selector
-                          radioButtons(
-                            inputId = "selector", label =  "Single or multiple genes?",
-                            choices = c("Single", "Multiple")
-                          ),
-                          # Single input side-panel  ----
-                          conditionalPanel(
-                            condition = "input.selector == 'Single'",
-                            selectizeInput(
-                              inputId = "genelist", label = "Input gene:", choices = NULL,
-                              selected = NULL, multiple = FALSE, options = NULL),
-                            actionButton(inputId = "submit_barplot", label = "Submit")
-                          ),
-                          # Multiple input side-panel ----     
-                          conditionalPanel(
-                            condition = "input.selector == 'Multiple'",
-                            textAreaInput(
-                              inputId = "multiple_genelist", 
-                              label = "Input your gene list:", 
-                              placeholder = "GAD1, CCK, GRIN1"),
-                            actionButton(inputId = "submit_heatmap", label = "Submit")
-                          ),
-                          
-                        ),
-                        # Main page                 
-                        mainPanel(
-                          #Page for displaying information about datasets ----
-                          tabsetPanel(type = "tabs", id = "tabset",
-                                      tabPanel(title = "Dataset Overview", value = "overview",
-                                               br(),
-                                               h3("Welcome to the Gene Visualization project!"),
-                                               br(),
-                                               h4("This web application allows you to examine layer-specific gene expression
-                across the cortex and determine layer annotations. "),
-                                               h4("The data for this application has been sourced from these following studies and institutions:"),
-                                               br(),
-                                               br(),
-                                               h3("Bulk Tissue:"),
-                                               h3(a("Zeng et al. (2012)", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
-                                               h4("This study assayed roughly 1000 genes through in-situ hybridization in samples from the midtemporal and primary visual cortices."),
-                                               br(),
-                                               h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
-                                               h4("This study assayed the whole genome using high-throughput RNA-seq in samples from the DLPFC."),
-                                               br(),
-                                               h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
-                                               h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform in samples from the DLPFC."),
-                                               br(),
-                                               h3("Single-cell:"),
-                                               h3(a("Allen Brain Atlas", href = "https://portal.brain-map.org/atlases-and-data/rnaseq/human-multiple-cortical-areas-smart-seq", target = "_blank")),
-                                               h4("This dataset assayed multiple cortical regions and assayed the whole genome across roughly 49,000 single-cell nuclei.")
-                                      ),
-                                      #Page for displaying single or multiple gene visualizations ----
-                                      tabPanel(title = "Gene Visualization", value = "visualization",
-                                               # Single gene visualization
-                                               br(),
-                                               conditionalPanel(
-                                                 h3("Layer-specific gene expression"),
-                                                 #Only show when the input selector is Single 
-                                                 condition = "input.selector == 'Single'",
-                                                 #Output barplot visualization
-                                                 plotOutput("Barplot") %>% withSpinner(),
-                                                 br(),
-                                                 br(),
-                                                 h5(textOutput("barplot_caption")),
-                                                 br(),
-                                                 br(),
-                                                 h4(verbatimTextOutput("summary_single")),
-                                               ),
-                                               # Multiple gene visualization
-                                               conditionalPanel(
-                                                 h4("Layer-specific Heatmaps"),
-                                                 #Only show when the input selector is Multiple
-                                                 condition = "input.selector == 'Multiple'",
-                                                 br(),
-                                                 #Output heatmap visualizations for bulk tissue RNA-seq
-                                                 plotOutput("He_heatmap", height = "auto") %>% withSpinner(),
-                                                 plotOutput("Maynard_heatmap", height = "auto") %>% withSpinner(),
-                                                 br(),
-                                                 h5(textOutput("heatmap_caption")),
-                                                 br(),
-                                                 h4(verbatimTextOutput("summary_multiple")),
-                                                 br(),
-                                                 br(),
-                                                 plotlyOutput("AUROC_heatmap") %>% withSpinner(),
-                                                 h5(textOutput("AUROC_heatmap_caption")),
-                                                 br(),
-                                                 br(),
-                                                 #Output heatmap visualizations for scRNA-seq data per cell class type
-                                                 plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
-                                                 plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
-                                                 plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
-                                                 h5(textOutput("scRNA_heatmap_caption")),
-                                                 br(),
-                                               )
-                                      )
-                          )
-                        )
-                      )
-             )
+  # Visualize gene expression across layers through heatmap or barplot    
+  tabPanel(title = "Gene Visualization",
+    sidebarLayout(
+      sidebarPanel(
+        # Single or multiple gene selector
+        radioButtons(
+          inputId = "selector", label =  "Single or multiple genes?",
+          choices = c("Single", "Multiple")
+        ),
+        # Single input side-panel  ----
+        conditionalPanel(
+          condition = "input.selector == 'Single'",
+          selectizeInput(
+            inputId = "genelist", label = "Input gene:", choices = NULL,
+            selected = NULL, multiple = FALSE, options = NULL),
+            actionButton(inputId = "submit_barplot", label = "Submit")
+        ),
+        # Multiple input side-panel ----     
+        conditionalPanel(
+          condition = "input.selector == 'Multiple'",
+          textAreaInput(
+            inputId = "multiple_genelist", 
+            label = "Input your gene list:", 
+            placeholder = "GAD1, CCK, GRIN1"),
+            actionButton(inputId = "submit_heatmap", label = "Submit")
+        ),
+      ),
+      # Main page                 
+      mainPanel(
+        tabsetPanel(type = "tabs", id = "tabset",
+          #Page for displaying information about datasets ----
+          tabPanel(title = "Dataset Overview", value = "overview",
+            br(),
+            h3("Welcome to the Gene Visualization project!"),
+            br(),
+            h4("This web application allows you to examine layer-specific gene expression across the cortex and determine layer annotations."),
+            h4("The data for this application has been sourced from these following studies and institutions:"),
+            br(),
+            br(),
+            h3("Bulk Tissue:"),
+            h3(a("Zeng et al. (2012)", href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", target = "_blank")),
+            h4("This study assayed roughly 1000 genes through in-situ hybridization in samples from the midtemporal and primary visual cortices."),
+            br(),
+            h3(a("He et al. (2017)", href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", target = "_blank")),
+            h4("This study assayed the whole genome using high-throughput RNA-seq in samples from the DLPFC."),
+            br(),
+            h3(a("Maynard et al. (2020)*", href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", target = "_blank")),
+            h4("*This study is currently a pre-print; it assayed the whole genome through the 10X Genomics Visium Platform in samples from the DLPFC."),
+            br(),
+            h3("Single-cell:"),
+            h3(a("Allen Brain Atlas", href = "https://portal.brain-map.org/atlases-and-data/rnaseq/human-multiple-cortical-areas-smart-seq", target = "_blank")),
+            h4("This dataset assayed multiple cortical regions and assayed the whole genome across roughly 49,000 single-cell nuclei.")
+          ),
+          #Page for displaying single or multiple gene visualizations ----
+          tabPanel(title = "Gene Visualization", value = "visualization",
+            # Single gene visualization
+            br(),
+            conditionalPanel(
+              h3("Layer-specific gene expression"),
+              #Only show when the input selector is Single 
+              condition = "input.selector == 'Single'",
+              #Output barplot visualization
+              plotOutput("Barplot") %>% withSpinner(),
+              br(),
+              br(),
+              h5(textOutput("barplot_caption")),
+              br(),
+              br(),
+              h4(verbatimTextOutput("summary_single")),
+            ),
+            # Multiple gene visualization
+            conditionalPanel(
+              h4("Layer-specific Heatmaps"),
+              #Only show when the input selector is Multiple
+              condition = "input.selector == 'Multiple'",
+              br(),
+              #Output heatmap visualizations for bulk tissue RNA-seq
+              plotOutput("He_heatmap", height = "auto") %>% withSpinner(),
+              plotOutput("Maynard_heatmap", height = "auto") %>% withSpinner(),
+              br(),
+              h5(textOutput("heatmap_caption")),
+              br(),
+              h4(verbatimTextOutput("summary_multiple")),
+              br(),
+              br(),
+              plotlyOutput("AUROC_heatmap") %>% withSpinner(),
+              h5(textOutput("AUROC_heatmap_caption")),
+              br(),
+              br(),
+              #Output heatmap visualizations for scRNA-seq data per cell class type
+              plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
+              plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
+              plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
+              h5(textOutput("scRNA_heatmap_caption")),
+              br(),
+            )
+           )
+          )
+        )
+      )
+    )
   )
 )
 
