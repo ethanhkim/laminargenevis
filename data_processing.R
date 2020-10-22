@@ -26,6 +26,7 @@ process_heatmap_function <- function(source_dataset, input_genelist){
   
   processed_heatmap_data %<>% 
     as_tibble() %>%
+    #Filter out genes that have NA for all layers
     filter_at(vars(Layer_1, Layer_2, Layer_3, Layer_4, Layer_5, Layer_6, WM),all_vars(!is.na(.))) %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
     pivot_longer(
@@ -134,13 +135,13 @@ separate_layers <- function(input_table, input_genelist) {
     layer <- input_table %>%
       dplyr::filter(str_detect(source_dataset, 'Zeng')) %>%
       dplyr::filter(gene_symbol %in% input_genelist, 
-             layer_marker == i) %>% 
+                    layer_marker == i) %>% 
       select(-"layer_marker", -"source_dataset")
     layer_gene_symbol <- as.vector(layer$gene_symbol)
     list_of_layers[[i]] <- layer_gene_symbol
   }
   
- return(list_of_layers)
+  return(list_of_layers)
 }
 
 
@@ -206,7 +207,7 @@ quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
 
 ## Function for Wilcoxon test
 wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
-
+  
   He_genes <- He_dataset %>%
     select(gene_symbol:WM) %>%
     filter(gene_symbol %in% input_genes) %>%
@@ -227,53 +228,78 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
   return(format(signif(wilcoxtest, digits = 4)))
 }
 
-## Overall function for AUROC and AUROC table:
-AUROC_function <- function(He_dataset, Maynard_dataset, multiple_genelist) {
+#Function for ranking bulk tissue datasets
+rank_bulk_dataset <- function(source_dataset) {
+  dataset_ranked <- source_dataset %>%
+    select(Layer_1:WM) %>%
+    map_df(rank)
+  dataset_ranked$gene_symbol <- source_dataset$gene_symbol
+  return(dataset_ranked)
+}
+
+#Function for ranking scRNA datasets
+rank_dataset_scRNA <- function(source_dataset) {
+  dataset_ranked <- source_dataset %>%
+    ungroup() %>%
+    pivot_wider(
+      names_from = cortical_layer_label,
+      values_from = mean_expression_scaled
+    )
+  gene_symbol <- dataset_ranked$gene_symbol
+  dataset_ranked %<>% select(L1:L6) %>% map_df(rank, ties.method = "min") %>%
+    add_column(gene_symbol = gene_symbol, class_label = "GABAergic")
+  return(dataset_ranked)
+}
+
+#Function to return indices 
+return_indices <- function(ranked_dataset, multiple_genelist) {
+  Indices <- as_tibble(ranked_dataset$gene_symbol)
+  names(Indices) <- "gene_symbol"
+  Indices %<>% mutate(isTargetGene = gene_symbol %in% multiple_genelist)
+  targetIndices <- Indices$isTargetGene
+  return(targetIndices)
+}
+
+## Function for AUROC
+# from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
+# by Sara Ballouz
+auroc_analytic <- function(scores, labels) {
+  negatives <- which(labels == 0, arr.ind = TRUE)
+  scores[negatives] <- 0
   
-  #Function for ranking datasets
-  rank_dataset <- function(source_dataset) {
-    dataset_ranked <- source_dataset %>%
-      select(Layer_1:WM) %>%
-      map_df(rank)
-    dataset_ranked$gene_symbol <- source_dataset$gene_symbol
-    return(dataset_ranked)
-  }
+  p <- sum(scores, na.rm = TRUE)
+  nL <- length(labels)
+  np <- sum(labels, na.rm = TRUE)
+  nn <- nL - np
   
-  #Function to return indices 
-  return_indices <- function(ranked_dataset, multiple_genelist) {
-    
-    Indices <- as_tibble(ranked_dataset$gene_symbol)
-    names(Indices) <- "gene_symbol"
-    Indices %<>% mutate(isTargetGene = gene_symbol %in% multiple_genelist)
-    targetIndices <- Indices$isTargetGene
-    return(targetIndices)
-  }
-  
-  ## Function for AUROC
-  # from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
-  # by Sara Ballouz
-  auroc_analytic <- function(scores, labels) {
-    
-    negatives <- which(labels == 0, arr.ind = TRUE)
-    scores[negatives] <- 0
-    
-    p <- sum(scores, na.rm = TRUE)
-    nL <- length(labels)
-    np <- sum(labels, na.rm = TRUE)
-    nn <- nL - np
-    
-    auroc <- (p/np - (np + 1)/2)/nn
-    
-    return(auroc)
-  } 
-  
-  ## Function for MWU for AUROC
-  apply_MWU <- function(column, targetIndices) {
-    wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
-  }
-  
-  He_df <- rank_dataset(He_dataset)
-  Maynard_df <- rank_dataset(Maynard_dataset)
+  auroc <- (p/np - (np + 1)/2)/nn
+  return(auroc)
+} 
+
+## Function for MWU for AUROC
+apply_MWU <- function(column, targetIndices) {
+  wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
+}
+
+## Function for performing AUROC on cell types in scRNA data
+auroc_cell_type <- function(dataset, multiple_genelist, cell_type) {
+  cell_type_df <- dataset %>%
+    filter(class_label == cell_type)
+  ranked_cell_type_df <- rank_dataset_scRNA(cell_type_df)
+  indices <- return_indices(ranked_cell_type_df, multiple_genelist)
+  ranked_cell_type_df %<>% select(-gene_symbol, -class_label)
+  AUROC_cell_type <- map_df(ranked_cell_type_df, auroc_analytic, indices)
+  AUROC_MWU <- map_df(ranked_cell_type_df, apply_MWU, indices)
+  AUROC_cell_type %<>% rbind(AUROC_MWU) %>% as.data.frame()
+  row.names(AUROC_cell_type) <- c(paste("AUROC", cell_type, sep = "_"), "p-Value")
+  return(AUROC_cell_type)
+}
+
+
+## Function for generating bulk tissue AUROC and p-value data
+AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
+  He_df <- rank_bulk_dataset(He_dataset)
+  Maynard_df <- rank_bulk_dataset(Maynard_dataset)
   
   He_indices <- return_indices(He_df, multiple_genelist)
   Maynard_indices <- return_indices(Maynard_df, multiple_genelist)
@@ -309,32 +335,79 @@ AUROC_function <- function(He_dataset, Maynard_dataset, multiple_genelist) {
            "AUROC (Maynard)" = AUROC_Maynard,
            "p-value (Maynard)" = pValue_Maynard,
            "Adjusted p-value (Maynard)" = adjusted_P_Maynard)
+  
+  AUROC <- AUROC_table %>% select(starts_with("AUROC"), Layers) %>%
+    mutate(Layers = gsub("Layer_", "L", Layers)) %>%
+    pivot_longer(cols = starts_with("AUROC"),
+                 names_to = c("class_label"),
+                 values_to = "AUROC_values") %>%
+    mutate(class_label = gsub("AUROC_", "", class_label)) %>%
+    rename(AUROC = AUROC_values, Layer = Layers)
+  bulk_table_pValue <- AUROC_table %>% select(starts_with("Adjusted"), Layers) %>%
+    mutate(Layers = gsub("Layer_", "L", Layers)) %>%
+    pivot_longer(cols = starts_with("Adjusted"),
+                 names_to = c("class_label"),
+                 values_to = "adj.pvalues") %>%
+    mutate(adj.pvalues = ifelse(adj.pvalues > 0.05, NA, adj.pvalues))
+  AUROC %<>%
+    add_column(pValue = bulk_table_pValue$adj.pvalues) %>%
+    mutate(signif_marker = ifelse(!is.na(pValue), "*", ""))
 }
 
-## Function for generating Allen scRNA-seq barplots
-load_scRNA_region <- function(selected_region, selected_multiple_genelist) {
-  
-  genelist <- selected_multiple_genelist
-  matrix <- if (selected_region == "A1C") {
-    fread(here("data", "processed", "Allen_scRNA", "A1C_matrix.csv"))
-  } else if (selected_region == "MTG") {
-    fread(here("data", "processed", "Allen_scRNA", "MTG_matrix.csv"))
-  } else if (selected_region == "V1C") {
-    fread(here("data", "processed", "Allen_scRNA", "V1C_matrix.csv"))
-  } else if (selected_region == "CgG") {
-    fread(here("data", "processed", "Allen_scRNA", "CgG_matrix.csv"))
-  } else if (selected_region == "M1lm") {
-    fread(here("data", "processed", "Allen_scRNA", "M1lm_matrix.csv"))
-  } else if (selected_region == "M1ul") {
-    fread(here("data", "processed", "Allen_scRNA", "M1ul_matrix.csv"))
-  } else if (selected_region == "S1lm") {
-    fread(here("data", "processed", "Allen_scRNA", "S1lm_matrix.csv"))
-  } else fread(here("data", "processed", "Allen_scRNA", "S1ul_matrix.csv"))
-  
-  matrix %<>%
-    filter(gene %in% selected_multiple_genelist) 
-
+## Function for generaing scRNA AUROC and p-value data
+AUROC_scRNA <- function(source_dataset, multiple_genelist) {
+  scRNA_AUROC_list <- list()
+  for (i in unique(source_dataset$class_label)) {
+    scRNA_AUROC_list[[i]] <- auroc_cell_type(source_dataset, multiple_genelist, i)
+  }
+  scRNA_AUROC_table <- rbindlist(scRNA_AUROC_list, idcol = "rownames") %>%
+    mutate(rownames = c("AUROC_GABA", "pValue_GABA", "AUROC_GLUT", "pValue_GLUT", "AUROC_NON", "pValue_NON")) %>%
+    column_to_rownames(var = "rownames") %>% 
+    add_column(WM = NA) %>%
+    t() %>%
+    as.data.frame() %>%
+    rownames_to_column(var = "Layer")
+  scRNA_pValue_table <- scRNA_AUROC_table %>% select(starts_with("pValue"), Layer) %>%
+    pivot_longer(cols = starts_with("pValue"),
+                 names_to = c("p_Value"),
+                 values_to = "pValue") %>%
+    mutate(p_Value = gsub("pValue_", "", p_Value)) %>%
+    rename(class_label = p_Value) %>%
+    mutate(pValue = p.adjust(pValue)) %>%
+    mutate(pValue = ifelse(pValue > 0.05, NA, pValue))
+  scRNA_AUROC_table %<>% select(starts_with("AUROC"), Layer) %>%
+    pivot_longer(cols = starts_with("AUROC"),
+                 names_to = c("class_label"),
+                 values_to = "AUROC_values") %>%
+    mutate(class_label = gsub("AUROC_", "", class_label)) %>%
+    rename(AUROC = AUROC_values) %>%
+    add_column(pValue = scRNA_pValue_table$pValue) %>%
+    mutate(signif_marker = ifelse(!is.na(pValue), "*", ""))
+  return(scRNA_AUROC_table)
 }
 
-  
+## Function for binding scRNA and bulk tissue AUROC data to view as heatmap
+AUROC_data <- function(scRNA_AUROC_table, bulk_AUROC_table) {
+  AUROC_table <- rbind(scRNA_AUROC_table, bulk_AUROC_table) %>%
+    rename(dataset = class_label) %>%
+    mutate(dataset = gsub("GABA", "scRNA_GABA", dataset)) %>%
+    mutate(dataset = gsub("GLUT", "scRNA_GLUT", dataset)) %>%
+    mutate(dataset = gsub("NON", "scRNA_Non-neuronal", dataset)) %>%
+    mutate(dataset = gsub("AUROC ", "", dataset)) %>%
+    mutate(dataset = gsub("\\(", "", dataset)) %>%
+    mutate(dataset = gsub("\\)", "", dataset))
+  AUROC_table$Layer <- factor(AUROC_table$Layer, levels = c("WM", "L6", "L5", "L4", "L3", "L2", "L1"))
+  return(AUROC_table)
+}
+
+
+#scRNA Heatmaps ---- 
+
+scRNA_Heatmap_data <- function(data, genelist, cellType) {
+  heatmap_data <- data %>%
+    filter(gene_symbol %in% genelist) %>%
+    filter(class_label == cellType) %>%
+    rename(Layer = cortical_layer_label, Mean_Expression = mean_expression_scaled, Cell_Type = class_label)
+}
+
 
