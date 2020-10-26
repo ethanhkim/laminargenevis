@@ -7,11 +7,4 @@ google-analytics.html
 /data/processed/Maynard_dataset_average.Rdata
 /data/processed/Zeng_dataset_long.Rdata
 /data/processed/He_Maynard_diag_genes.Rdata
-/data/processed/Allen_scRNA/A1C_matrix.csv
-/data/processed/Allen_scRNA/CgG_matrix.csv
-/data/processed/Allen_scRNA/M1lm_matrix.csv
-/data/processed/Allen_scRNA/M1ul_matrix.csv
-/data/processed/Allen_scRNA/MTG_matrix.csv
-/data/processed/Allen_scRNA/S1lm_matrix.csv
-/data/processed/Allen_scRNA/S1ul_matrix.csv
-/data/processed/Allen_scRNA/V1C_matrix.csv
+/data/processed/Allen_scRNA/MTG_matrix_scaled.Rdata
