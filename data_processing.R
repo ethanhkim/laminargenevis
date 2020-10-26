@@ -90,7 +90,7 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     t() %>%
     as_tibble(rownames = NA)
-  scRNA_barplpot_data <- MTG_matrix_scaled %>%
+  scRNA_barplpot_data <- scRNA_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     rename("Z_score" = mean_expression_scaled, layer = cortical_layer_label) %>%
     mutate(Layer = gsub("L", "Layer_", layer)) %>%

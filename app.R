@@ -174,7 +174,7 @@ server <- function(input, output, session) {
     # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     # Process dataset to correct format for heatmap and barplot
-    Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average)
+    Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average, MTG_matrix_scaled)
     
     # Single gene visualization; barplot
     output$Barplot <- renderPlot({
@@ -341,10 +341,7 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(
-            x = "Z score",
-            y = "Layer"
-          )
+          labs(x = "Z score", y = "Layer", title = "He et al Scatter plot")
       }, height = heatmapHeight)
       output$Maynard_heatmap <- renderPlot({
         Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
@@ -354,10 +351,7 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(
-            x = "Z score",
-            y = "Layer"
-          )
+          labs(x = "Z score", y = "Layer", title = "Maynard et al Scatter plot")
       }, height = heatmapHeight)
 
       output$bulk_figure_caption <- renderPrint({
@@ -488,7 +482,7 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer")
+          labs(x = "Z score", y = "Layer", title = "GABAergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_GLUT <- renderPlot({
@@ -499,7 +493,7 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer")
+          labs(x = "Z score", y = "Layer", title = "Glutamatergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_NON <- renderPlot({
@@ -510,7 +504,7 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer")
+          labs(x = "Z score", y = "Layer", title = "Non-neuronal Expression")
       }, height = heatmapHeight)
       
       output$scRNA_figure_caption <- renderPrint({
