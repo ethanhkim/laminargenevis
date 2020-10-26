@@ -234,7 +234,7 @@ server <- function(input, output, session) {
         if (sum(length(selected_gene_list_single %in% Zeng_dataset_long$gene_symbol)) == 0) {
           ""
         } else paste0(
-          "Specificaly in the Zeng dataset, ",
+          "Specifically in the Zeng dataset, ",
           selected_gene_list_single,
           " was found to ",
           if (length(unlist(layer_specific_gene_list_single $`Layer 1`)) == 0 &
@@ -349,7 +349,7 @@ server <- function(input, output, session) {
     output$AUROC_heatmap <- renderPlotly({
       ggplot(data = AUROC_df, mapping = aes(x = dataset, y = Layer, fill = AUROC)) +
         geom_tile() +
-        scale_fill_distiller(palette = "RdYlBu", direction = -1, limits = c(0,1)) +
+        scale_fill_distiller(palette = "RdBu", direction = -1, limits = c(0,1)) +
         scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
         #Puts stars on layer marker annotations
         geom_text(aes(label = signif_marker), size = 7, vjust = 1)

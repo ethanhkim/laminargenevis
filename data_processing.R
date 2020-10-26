@@ -80,16 +80,25 @@ process_heatmap_function <- function(source_dataset, input_genelist){
 
 ## Function to process barplot data ##
 
-process_barplot_data <- function(input_genelist, dataset1, dataset2) {
+process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, scRNA_dataset) {
   
-  He_barplot_data <- dataset1 %>%
+  He_barplot_data <- He_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     t() %>%
     as_tibble(rownames = NA)
-  Maynard_barplot_data <- dataset2 %>%
+  Maynard_barplot_data <- Maynard_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
     t() %>%
     as_tibble(rownames = NA)
+  scRNA_barplpot_data <- MTG_matrix_scaled %>%
+    dplyr::filter(gene_symbol %in% input_genelist) %>%
+    rename("Z_score" = mean_expression_scaled, layer = cortical_layer_label) %>%
+    mutate(Layer = gsub("L", "Layer_", layer)) %>%
+    unite(layers, c("class_label", "Layer"), sep = "_", remove = F) %>%
+    mutate(Layer = gsub("Layer_", "", Layer)) %>%
+    rename(Dataset = class_label) %>%
+    add_column(layer_label = "") %>%
+    select(gene_symbol, layers, Z_score, layer_label, Dataset, Layer)
   
   Barplot_data <- He_barplot_data %>%
     rownames_to_column(var = "variables") %>%
@@ -125,6 +134,12 @@ process_barplot_data <- function(input_genelist, dataset1, dataset2) {
       str_detect(layers, "4") ~ "4", str_detect(layers, "5") ~ "5", str_detect(layers, "6") ~ "6",
       str_detect(layers, "WM") ~ "WM"
     ))
+  
+  Barplot_data %<>%
+    rbind(scRNA_barplpot_data) %>%
+    mutate(Dataset = factor(Dataset, levels = c("He", "Maynard", "GABAergic", "Glutamatergic", "Non-neuronal")))
+  
+  return(Barplot_data)
 }
 
 separate_layers <- function(input_table, input_genelist) {
