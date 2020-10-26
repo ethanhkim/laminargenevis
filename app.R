@@ -112,20 +112,20 @@ ui <- fluidPage(
               plotOutput("He_heatmap", height = "auto") %>% withSpinner(),
               plotOutput("Maynard_heatmap", height = "auto") %>% withSpinner(),
               br(),
-              h5(textOutput("heatmap_caption")),
+              h5(textOutput("bulk_figure_caption")),
               br(),
               h4(verbatimTextOutput("summary_multiple")),
-              br(),
-              br(),
-              plotlyOutput("AUROC_heatmap") %>% withSpinner(),
-              h5(textOutput("AUROC_heatmap_caption")),
               br(),
               br(),
               #Output heatmap visualizations for scRNA-seq data per cell class type
               plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
               plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
               plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
-              h5(textOutput("scRNA_heatmap_caption")),
+              h5(textOutput("scRNA_figure_caption")),
+              br(),
+              br(),
+              plotlyOutput("AUROC_heatmap") %>% withSpinner(),
+              h5(textOutput("AUROC_heatmap_caption")),
               br(),
             )
            )
@@ -273,6 +273,7 @@ server <- function(input, output, session) {
       ))
     }) 
   })
+
   
   #Multiple gene input ----
   observeEvent(input$submit_heatmap, {
@@ -306,16 +307,33 @@ server <- function(input, output, session) {
     
     #Bulk tissue RNA-seq heatmaps ---- 
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
-    output$He_heatmap <- renderPlot({
-      if (length(selected_gene_list_multiple) <= 30) {
-        ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
+    if (length(selected_gene_list_multiple) <= 30) {
+      output$He_heatmap <- renderPlot({
+          ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
+            geom_tile() +
+            scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+            scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
+            labs(y = "", x = "", title = "He et al Heatmap") +
+            #Puts stars on layer marker annotations
+            geom_text(aes(label = layer_label), size = 7, vjust = 1)
+      }, height = heatmapHeight)
+      output$Maynard_heatmap <- renderPlot({
+        ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "He et al Heatmap") +
+          labs(y = "", x = "", title = "Maynard et al Heatmap") +
           #Puts stars on layer marker annotations
           geom_text(aes(label = layer_label), size = 7, vjust = 1)
-      } else {
+      }, height = heatmapHeight)
+      
+      output$bulk_figure_caption <- renderPrint({
+        cat(paste("Fig 1. The heatmaps were created using the data from He et al and Maynard et al studies. The raw 
+                RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
+                source paper denoted the gene to be highly enriched within the specific cortical layer."))
+      })
+    } else {
+      output$He_heatmap <- renderPlot({
         He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
           mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
           ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
@@ -327,19 +345,8 @@ server <- function(input, output, session) {
             x = "Z score",
             y = "Layer"
           )
-      }
-    }, height = heatmapHeight)
-    
-    output$Maynard_heatmap <- renderPlot({
-      if (length(selected_gene_list_multiple) <= 30) {
-        ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
-          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "Maynard et al Heatmap") +
-          #Puts stars on layer marker annotations
-          geom_text(aes(label = layer_label), size = 7, vjust = 1)
-      } else {
+      }, height = heatmapHeight)
+      output$Maynard_heatmap <- renderPlot({
         Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
           mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
           ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
@@ -351,15 +358,14 @@ server <- function(input, output, session) {
             x = "Z score",
             y = "Layer"
           )
-      }
-      
-    }, height = heatmapHeight)
-    
-    output$heatmap_caption <- renderPrint({
-      cat(paste("Fig 1. The heatmaps were created using the data from He et al and Maynard et al studies. The raw 
-                RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
-                source paper denoted the gene to be highly enriched within the specific cortical layer."))
-    })
+      }, height = heatmapHeight)
+
+      output$bulk_figure_caption <- renderPrint({
+        cat(paste("Fig 1. The dot plots were created using the data from He et al and Maynard et al studies. The raw 
+                  RNA-seq data was normalized using z-score normalization. The horizontal bars indicate the median of the 
+                  gene expression values for that layer across all genes."))
+        })
+    }
     
     # AUROC table ----
     output$AUROC_heatmap <- renderPlotly({
@@ -440,14 +446,41 @@ server <- function(input, output, session) {
     # scRNA Heatmaps ----
     
     #Heatmap for scRNA data for GABAergic 
-    output$scRNA_heatmap_GABA <- renderPlot ({
-      if (length(selected_gene_list_multiple) <= 30) {
+    if (length(selected_gene_list_multiple) <= 30) {
+      output$scRNA_heatmap_GABA <- renderPlot({
         ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "GABAergic expression") 
-      } else {
+      }, height = heatmapHeight)
+      
+      output$scRNA_heatmap_GLUT <- renderPlot({
+        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
+          geom_tile() +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
+          labs(y = "", x = "", title = "Glutamatergic expression") 
+      }, height = heatmapHeight)
+      
+      output$scRNA_heatmap_NON <- renderPlot({
+        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
+          geom_tile() +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
+          labs(y = "", x = "", title = "Non-neuronal expression") 
+      }, height = heatmapHeight)
+      
+      #scRNA heatmap caption
+      output$scRNA_figure_caption <- renderPrint({
+        cat(paste("Fig 2. The heatmaps were created using the scRNA-seq data from the Allen Brain Institute which was
+                taken from live tissue, specifically from the middle temporal gyrus (MTG). The data was first
+                log(x+1) normalized on a per-gene basis and the mean of all samples were taken on a per-gene and layer basis. 
+                The mean was then transformed using z-score normalization. As there were three cell types identified, the heatmaps 
+                represent the expression of the selected genes on a per-cell type basis."))
+      })
+    } else {
+      output$scRNA_heatmap_GABA <- renderPlot({
         scRNA_GABA %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
@@ -455,21 +488,10 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(
-            x = "Z score",
-            y = "Layer"
-          )
-      }
-    }, height = heatmapHeight)
-    #Heatmap for scRNA data for Glutamatergic
-    output$scRNA_heatmap_GLUT <- renderPlot ({
-      if (length(selected_gene_list_multiple) <= 30) {
-        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
-          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "Glutamatergic expression") 
-      } else {
+          labs(x = "Z score", y = "Layer")
+      }, height = heatmapHeight)
+      
+      output$scRNA_heatmap_GLUT <- renderPlot({
         scRNA_GLUT %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
@@ -477,21 +499,10 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(
-            x = "Z score",
-            y = "Layer"
-          )
-      }
-    }, height = heatmapHeight)
-    #Heatmap for scRNA data for Non-neuronal
-    output$scRNA_heatmap_NON <- renderPlot ({
-      if (length(selected_gene_list_multiple) <= 30) {
-        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
-          scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "", title = "Non-neuronal expression") 
-      } else {
+          labs(x = "Z score", y = "Layer")
+      }, height = heatmapHeight)
+      
+      output$scRNA_heatmap_NON <- renderPlot({
         scRNA_NON %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
@@ -499,23 +510,21 @@ server <- function(input, output, session) {
           geom_jitter(width = .05, alpha = 0.4) +
           guides(fill = "none") +
           theme_bw() +
-          labs(
-            x = "Z score",
-            y = "Layer"
-          )
-      }
-    }, height = heatmapHeight)
-    
-    #scRNA heatmap caption
-    output$scRNA_heatmap_caption <- renderPrint({
-      cat(paste("Fig 2. The heatmaps were created using the scRNA-seq data from the Allen Brain Institute which was
+          labs(x = "Z score", y = "Layer")
+      }, height = heatmapHeight)
+      
+      output$scRNA_figure_caption <- renderPrint({
+        cat(paste("Fig 2. The dot plots were created using the scRNA-seq data from the Allen Brain Institute which was
                 taken from live tissue, specifically from the middle temporal gyrus (MTG). The data was first
                 log(x+1) normalized on a per-gene basis and the mean of all samples were taken on a per-gene and layer basis. 
-                The mean was then transformed using z-score normalization. As there were three cell types identified, the heatmaps 
-                represent the expression of the selected genes on a per-cell type basis."))
-    })
+                The mean was then transformed using z-score normalization. As there were three cell types identified, the dot plots 
+                represent the expression of the selected genes on a per-cell type basis. The line represents the median of the gene 
+                expression values for all genes in that layer."))
+      })
+    }
   })
 }
+
 
 
 
