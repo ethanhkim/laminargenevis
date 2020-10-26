@@ -316,9 +316,17 @@ server <- function(input, output, session) {
           #Puts stars on layer marker annotations
           geom_text(aes(label = layer_label), size = 7, vjust = 1)
       } else {
-        ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = Z_score, names = gene_symbol)) +
-          geom_jitter(width = 0.1) +
-          geom_hline(yintercept = 0, color = "darkgrey", size = 0.4)
+        He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
+          ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(
+            x = "Z score",
+            y = "Layer"
+          )
       }
     }, height = heatmapHeight)
     
@@ -332,9 +340,17 @@ server <- function(input, output, session) {
           #Puts stars on layer marker annotations
           geom_text(aes(label = layer_label), size = 7, vjust = 1)
       } else {
-        ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = Z_score, names = gene_symbol)) +
-          geom_jitter(width = 0.1) +
-          geom_hline(yintercept = 0, color = "darkgrey", size = 0.4)
+        Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
+          ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(
+            x = "Z score",
+            y = "Layer"
+          )
       }
       
     }, height = heatmapHeight)
@@ -432,9 +448,17 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "GABAergic expression") 
       } else {
-        ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = Mean_Expression, names = gene_symbol)) +
-          geom_jitter(width = 0.1) +
-          geom_hline(yintercept = 0, color = "black", size = 0.4)
+        scRNA_GABA %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
+          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
+          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(
+            x = "Z score",
+            y = "Layer"
+          )
       }
     }, height = heatmapHeight)
     #Heatmap for scRNA data for Glutamatergic
@@ -446,9 +470,17 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "Glutamatergic expression") 
       } else {
-        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = Mean_Expression, names = gene_symbol)) +
-          geom_jitter(width = 0.1) +
-          geom_hline(yintercept = 0, color = "black", size = 0.4)
+        scRNA_GLUT %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
+          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
+          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(
+            x = "Z score",
+            y = "Layer"
+          )
       }
     }, height = heatmapHeight)
     #Heatmap for scRNA data for Non-neuronal
@@ -460,10 +492,17 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "", title = "Non-neuronal expression") 
       } else {
-        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = Mean_Expression, names = gene_symbol)) +
-          geom_jitter(width = 0.1) +
-          geom_hline(yintercept = 0, color = "black", size = 0.4)
-        #add line for the median values of median_expression and change theme 
+        scRNA_NON %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
+          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
+          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(
+            x = "Z score",
+            y = "Layer"
+          )
       }
     }, height = heatmapHeight)
     

@@ -369,7 +369,7 @@ AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
     mutate(signif_marker = ifelse(!is.na(pValue), "*", ""))
 }
 
-## Function for generaing scRNA AUROC and p-value data
+## Function for generating scRNA AUROC and p-value data
 AUROC_scRNA <- function(source_dataset, multiple_genelist) {
   scRNA_AUROC_list <- list()
   for (i in unique(source_dataset$class_label)) {
