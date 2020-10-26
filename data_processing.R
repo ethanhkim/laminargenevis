@@ -96,9 +96,10 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
     mutate(Layer = gsub("L", "Layer_", layer)) %>%
     unite(layers, c("class_label", "Layer"), sep = "_", remove = F) %>%
     mutate(Layer = gsub("Layer_", "", Layer)) %>%
-    rename(Dataset = class_label) %>%
+    rename(Source_Dataset = class_label) %>%
+    mutate(Source_Dataset = paste("ABI", Source_Dataset, sep = "_")) %>%
     add_column(layer_label = "") %>%
-    select(gene_symbol, layers, Z_score, layer_label, Dataset, Layer)
+    select(gene_symbol, layers, Z_score, layer_label, Source_Dataset, Layer)
   
   Barplot_data <- He_barplot_data %>%
     rownames_to_column(var = "variables") %>%
@@ -126,7 +127,7 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
     select(gene_symbol, layers, Z_score, layer_label) %>%
     mutate_at("Z_score", as.numeric) %>%
     mutate_at("layer_label", ~replace(., is.na(.), "")) %>%
-    mutate(Dataset = ifelse(test = str_detect(layers, "He"),
+    mutate(Source_Dataset = ifelse(test = str_detect(layers, "He"),
                             yes = "He",
                             no = "Maynard")) %>%
     mutate(Layer = case_when(
@@ -137,7 +138,7 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
   
   Barplot_data %<>%
     rbind(scRNA_barplpot_data) %>%
-    mutate(Dataset = factor(Dataset, levels = c("He", "Maynard", "GABAergic", "Glutamatergic", "Non-neuronal")))
+    mutate(Source_Dataset = factor(Source_Dataset, levels = c("He", "Maynard", "ABI_GABAergic", "ABI_Glutamatergic", "ABI_Non-neuronal")))
   
   return(Barplot_data)
 }
