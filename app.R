@@ -109,8 +109,8 @@ ui <- fluidPage(
               condition = "input.selector == 'Multiple'",
               br(),
               #Output heatmap visualizations for bulk tissue RNA-seq
-              plotOutput("He_heatmap", height = "auto") %>% withSpinner(),
-              plotOutput("Maynard_heatmap", height = "auto") %>% withSpinner(),
+              plotOutput("He_figure", height = "auto") %>% withSpinner(),
+              plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
               br(),
               h5(textOutput("bulk_figure_caption")),
               br(),
@@ -178,20 +178,22 @@ server <- function(input, output, session) {
     
     # Single gene visualization; barplot
     output$Barplot <- renderPlot({
-      ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Dataset, group = Dataset)) +
+      ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Source_Dataset, group = Source_Dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + theme(axis.text.x = element_text(angle = 45)) +
-        geom_text(aes(label = layer_label, group = Dataset, 
+        geom_text(aes(label = layer_label, group = Source_Dataset, 
                       vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
                   position = position_dodge(width = 0.75)) +
         geom_hline(yintercept = 1.681020) +
-        geom_hline(yintercept = -1.506113)  
+        geom_hline(yintercept = -1.506113) +
+        theme_bw() +
+        labs(fill = "Source Dataset")
     }) 
     
     output$barplot_caption <- renderPrint({
-      cat(paste("Fig 1. The barplots were created using the data from He et al and Maynard et al studies. The raw 
-              RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
-              source paper denoted the gene to be highly enriched within the specific cortical layer. The horizontal lines
-              represent the value of the top (95th) and bottom (5th) quantile of expression levels across both datasets."))
+      cat(paste("Fig 1. The barplots were created using the data from He et al and Maynard et al studies, as well as the 
+                data from the Allen Brain Institute. Raw RNA-seq data was normalized using z-score normalization. 
+                The horizontal lines represent the value of the top (95th) and bottom (5th) quantile of expression 
+                levels across both datasets."))
     })
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations
@@ -308,7 +310,7 @@ server <- function(input, output, session) {
     #Bulk tissue RNA-seq heatmaps ---- 
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
     if (length(selected_gene_list_multiple) <= 30) {
-      output$He_heatmap <- renderPlot({
+      output$He_figure <- renderPlot({
           ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
             geom_tile() +
             scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
@@ -317,7 +319,7 @@ server <- function(input, output, session) {
             #Puts stars on layer marker annotations
             geom_text(aes(label = layer_label), size = 7, vjust = 1)
       }, height = heatmapHeight)
-      output$Maynard_heatmap <- renderPlot({
+      output$Maynard_figure <- renderPlot({
         ggplot(data = Maynard_heatmap_data, mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
@@ -333,22 +335,24 @@ server <- function(input, output, session) {
                 source paper denoted the gene to be highly enriched within the specific cortical layer."))
       })
     } else {
-      output$He_heatmap <- renderPlot({
+      output$He_figure <- renderPlot({
         He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
           mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
           ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
+          ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
           labs(x = "Z score", y = "Layer", title = "He et al Scatter plot")
       }, height = heatmapHeight)
-      output$Maynard_heatmap <- renderPlot({
+      output$Maynard_figure <- renderPlot({
         Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% group_by(layer) %>% summarize(median_rank = median(Z_score)), by = "layer") %>%
           mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6"))) %>%
           ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
+          ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
           labs(x = "Z score", y = "Layer", title = "Maynard et al Scatter plot")
@@ -480,6 +484,7 @@ server <- function(input, output, session) {
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
+          ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
           labs(x = "Z score", y = "Layer", title = "GABAergic Expression")
@@ -491,6 +496,7 @@ server <- function(input, output, session) {
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
+          ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
           labs(x = "Z score", y = "Layer", title = "Glutamatergic Expression")
@@ -502,6 +508,7 @@ server <- function(input, output, session) {
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
+          ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
           labs(x = "Z score", y = "Layer", title = "Non-neuronal Expression")
