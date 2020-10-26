@@ -158,8 +158,8 @@ server <- function(input, output, session) {
   
   #Hide plots until when genes are submitted
   output$Barplot <- NULL
-  output$He_heatmap <- NULL
-  output$Maynard_heatmap <- NULL 
+  output$He_figure <- NULL
+  output$Maynard_figure <- NULL 
   output$heatmap_caption <- NULL
   output$AUROC_heatmap <- NULL
   output$scRNA_heatmap_GABA <- NULL
