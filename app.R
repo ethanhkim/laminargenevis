@@ -395,7 +395,7 @@ server <- function(input, output, session) {
         sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
         " were assayed by Zeng et al.\n\n",
         #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
-        "Between the He and Maynard datasets, across the layers, the input genes had a mean Pearson correlation value of", 
+        "Between the He and Maynard datasets, across the layers, the input genes had a mean Pearson correlation value of ", 
         multi_gene_cor,
         " (p = ",
         p_value_multiple_gene,
@@ -487,11 +487,11 @@ server <- function(input, output, session) {
           ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer", title = "GABAergic Expression")
+          labs(x = "Layer", y = "Z score", title = "GABAergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_GLUT <- renderPlot({
-        scRNA_GLUT %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
+        scRNA_GLUT %<>% inner_join(scRNA_GLUT %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
@@ -499,11 +499,11 @@ server <- function(input, output, session) {
           ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer", title = "Glutamatergic Expression")
+          labs(x = "Layer", y = "Z score", title = "Glutamatergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_NON <- renderPlot({
-        scRNA_NON %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
+        scRNA_NON %<>% inner_join(scRNA_NON %>% group_by(Layer) %>% summarize(median_rank = median(Mean_Expression)), by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
           ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
@@ -511,7 +511,7 @@ server <- function(input, output, session) {
           ylim(-3, 3) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Z score", y = "Layer", title = "Non-neuronal Expression")
+          labs(x = "Layer", y = "Z score", title = "Non-neuronal Expression")
       }, height = heatmapHeight)
       
       output$scRNA_figure_caption <- renderPrint({
