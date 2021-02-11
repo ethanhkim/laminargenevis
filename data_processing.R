@@ -236,9 +236,12 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
     column_to_rownames(var = "gene_symbol") %>%
     t() 
   
+  # Pearson's correlation test
   He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
+  # Get the diagonal (correlation of each gene against each other)
   He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE)
   
+  # P-value on Pearson's
   wilcoxtest <- wilcox.test(He_Maynard_diag_genes, He_Maynard_diagonal)$p.value
   
   return(format(signif(wilcoxtest, digits = 4)))
@@ -277,7 +280,7 @@ return_indices <- function(ranked_dataset, multiple_genelist) {
 }
 
 ## Function for AUROC
-# from https://github.com/sarbal/EGAD/blob/master/EGAD/R/auroc_analytic.R
+# from https://github.com/sarbal/EGAD/blob/master/R/auroc_analytic.R
 # by Sara Ballouz
 auroc_analytic <- function(scores, labels) {
   negatives <- which(labels == 0, arr.ind = TRUE)
