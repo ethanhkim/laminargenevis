@@ -54,8 +54,8 @@ ui <- fluidPage(
       sidebarPanel(
         # Single or multiple gene selector
         radioButtons(
-          inputId = "selector", label =  "Would you like to examine a single gene,
-          or multiple genes?",
+          inputId = "selector", label =  "Choose to examine
+          either a single gene, or multiple genes: \n",
           choices = c("Single", "Multiple")
         ),
         # Single input side-panel  ----
@@ -208,6 +208,11 @@ server <- function(input, output, session) {
   He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
     pull(var = 1)
   
+  # Calculate top and bottom 5 percentile for values
+  top_and_bottom_5th_perc <- top_and_bottom_quantile(
+    Maynard_dataset_average, He_DS1_Human_averaged, MTG_matrix_scaled
+  )
+  
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
                        choices = common_genelist, server = TRUE)
   
@@ -233,32 +238,50 @@ server <- function(input, output, session) {
     # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     # Process dataset to correct format for heatmap and barplot
-    Barplot_data <- process_barplot_data(selected_gene_list_single, He_DS1_Human_averaged, Maynard_dataset_average, MTG_matrix_scaled)
+    Barplot_data <- process_barplot_data(selected_gene_list_single, 
+                                         He_DS1_Human_averaged, 
+                                         Maynard_dataset_average, 
+                                         MTG_matrix_scaled)
+    # All normalized values
+    all_values <- MTG_matrix_scaled$mean_expression_scaled
     
     # Single gene visualization; barplot
     output$Barplot <- renderPlot({
       ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Source_Dataset, 
                                       group = Source_Dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
-        theme(axis.text.x = element_text(angle = 45)) +
-        geom_text(aes(label = layer_label, group = Source_Dataset, 
-                      vjust = ifelse(Z_score >= -0.1, 0, 2.5)), 
-                  position = position_dodge(width = 0.75)) +
-        geom_hline(yintercept = 1.681020) +
-        geom_hline(yintercept = -1.506113) +
-        theme_bw() +
-        labs(fill = "Source Dataset", y = "mRNA expression (normalized)", 
-             x = "Cortical Layer", 
-             title = paste0(selected_gene_list_single, ' expression across the human neocortex'))
+        ggtitle(paste0('Expression of ', selected_gene_list_single, 
+                       ' across the human neocortex')) +
+        geom_hline(yintercept = top_and_bottom_5th_perc$top_5,
+                   color="black", linetype="dashed") +
+        geom_hline(yintercept = top_and_bottom_5th_perc$bottom_5,
+                   color="black", linetype="dashed") +
+        theme_bw() + 
+        scale_fill_discrete(name="Source Dataset",
+                            breaks=c("He", "Maynard", "ABI_GABAergic", 
+                                     "ABI_Glutamatergic", "ABI_Non-neuronal"),
+                            labels=c("He (DLPFC)", "Maynard (DLPFC)", 
+                                     "AIBS  - GABAergic (MTG)", 
+                                     "AIBS - Gluamatergic (MTG)",
+                                     "AIBS - Non-neuronal (MTG)")) +
+        theme(axis.text.x = element_text(size = 13), 
+              axis.text.y = element_text(size = 13),
+              axis.title.x = element_text(size = 15),
+              axis.title.y = element_text(size = 15),
+              legend.title = element_text(size = 14),
+              legend.text = element_text(size = 12),
+              plot.title = element_text(size=17)) +
+        xlab("Cortical Layer") + ylab("mRNA expression (normalized)")
     }) 
     
     output$barplot_caption <- renderPrint({
       cat(paste("Fig 1. The barplots were created using the data from He et al 
-                and Maynard et al studies, as well as the data from the Allen 
-                Institute for Brain Science. Raw RNA-seq data was normalized 
-                using z-score normalization. The horizontal lines represent the 
-                value of the top (95th) and bottom (5th) quantile of expression 
-                levels across both datasets."))
+                and Maynard et al studies, and data from the Allen Institute 
+                for Brain Science. Raw RNA-seq data was normalized through 
+                counts per million (CPM), log-transformed and z-score normalized. 
+                The horizontal dashed lines represent the value of the top (95th) and 
+                bottom (5th) quantile of normalized expression values across all 
+                data."))
     })
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations
