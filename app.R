@@ -91,7 +91,7 @@ ui <- fluidPage(
             h3("App Workflow:"),
             p("Here's a quick overview of the app! The He et al, Maynard et al
               and AIBS data have been standardized for ease of comparison, 
-              shown in (A). Users (you!) have the option of choosing to 
+              shown in (A). Users have the option of choosing to 
               examine either", strong("Single"), "or", strong("Multiple"),
               "gene(s) in the HGNC gene symbol format. Choosing Single Gene
               will give you a plot similar to (B), and choosing Multiple Genes
@@ -131,7 +131,11 @@ ui <- fluidPage(
                         cortical regions and assays the whole genome across roughly 
                         49,000 single-cell nuclei.")), style = 'font-size:17px'),
             ),
-            br()
+            br(),
+            br(),
+            p('The code for the application and the analyses used are available on Github: ',
+                p(a('Github', href = 'https://github.com/ethanhkim/transcriptome_app',
+                    target = "_blank")))
           ),
           #Page for displaying single or multiple gene visualizations ----
           tabPanel(title = "Gene Visualization", value = "visualization",
