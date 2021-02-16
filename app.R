@@ -80,7 +80,7 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(type = "tabs", id = "tabset",
           #Page for displaying information about datasets ----
-          tabPanel(title = "Study Overview", value = "overview",
+          tabPanel(title = "App Overview", value = "overview",
             br(),
             h2("Welcome to LaminaRGeneVis!"),
             br(),
@@ -100,7 +100,7 @@ ui <- fluidPage(
             img(src = 'pageFigure.png', style = "display: block; margin-left: 
                 auto; margin-right: auto;"),
             br(),
-            h3("Sourced Data:"),
+            h3("Source Data:"),
             p("The data for this application has been sourced from these 
                following studies and institutions:", style='font-size:17px'),
             tags$ul(
@@ -163,9 +163,10 @@ ui <- fluidPage(
               br(),
               # Show summary heatmap of AUC values
               h4(textOutput('AUROC_heatmap_title')),
-              br(),
               plotlyOutput("AUROC_heatmap") %>% withSpinner(),
               p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
+              br(),
+              p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
               br(),
               #Output heatmap visualizations for bulk tissue RNA-seq
               h4(textOutput('bulk_figure_title')),
@@ -174,9 +175,6 @@ ui <- fluidPage(
               plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
               br(),
               p(textOutput("bulk_figure_caption"),style='font-size:15px'),
-              br(),
-              p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
-              br(),
               br(),
               #Output heatmap visualizations for scRNA-seq data per cell class type
               h4(textOutput('scRNA_figure_title')),
@@ -525,8 +523,7 @@ server <- function(input, output, session) {
       cat(paste("Fig 1. The layers were ranked in each dataset with respect to 
                 the gene expression of the chosen genes, and the AUC score was 
                 calculated per layer. P-values were calcuated using the 
-                Mann-Whitney U test. Stars indicate thatthe p-values passed 
-                correction, and were > 0.05."))
+                Mann-Whitney U test. Stars indicate p-value < 0.05."))
     })
     
     # Summary textbox ----
