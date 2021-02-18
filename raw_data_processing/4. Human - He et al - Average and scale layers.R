@@ -82,9 +82,6 @@ He_DS1_averaged_by_layer <- tibble(
   Layer_6 = He_Layer6_averaged$mean,
   Layer_7 = He_WM_averaged$V17
 )
-<<<<<<< HEAD
-=======
-
 
 ## Scale Layers ##
 
@@ -109,5 +106,3 @@ He_values_transposed <- He_values %>%
   as_tibble()
 
 
-
->>>>>>> 4e70cfd78b048eb455440c3023a2e50d19d2e770
