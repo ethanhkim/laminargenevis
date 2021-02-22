@@ -105,13 +105,6 @@ ui <- fluidPage(
             p("The data for this application has been sourced from these 
                following studies and institutions:", style='font-size:17px'),
             tags$ul(
-              # Zeng et al description
-              tags$li(p(a("Zeng et al. (2012): ", 
-                      href = "https://pubmed.ncbi.nlm.nih.gov/22500809/", 
-                      target = "_blank"), p("This bulk-tissue study assayed roughly 
-                      1000 genes through", em("in-situ"), "hybridization in samples 
-                      from the midtemporal and primary visual cortices.")), 
-                      style = 'font-size:17px'),
               # He et al description
               tags$li(p(a("He et al. (2017):", 
                       href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
@@ -138,9 +131,9 @@ ui <- fluidPage(
               tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
                       "Github.")
               , style = 'font-size:17px')),
-          #Page for displaying single or multiple gene visualizations ----
+          # Single or multiple gene visualizations ----
           tabPanel(title = "Gene Visualization", value = "visualization",
-            # Single gene visualization
+            ### Single gene ----
             br(),
             conditionalPanel(
               h3("Layer-specific gene expression"),
@@ -156,7 +149,7 @@ ui <- fluidPage(
               br(),
               verbatimTextOutput('summary_single'),
             ),
-            # Multiple gene visualization
+            # Multiple gene visualization ----
             conditionalPanel(
               h3("Layer-specific Heatmaps"),
               #Only show when the input selector is Multiple
@@ -194,8 +187,7 @@ ui <- fluidPage(
   )
 )
 
-
-# Define server logic ----
+# Server ----
 server <- function(input, output, session) {
   
   # List of genes that are common through the He and Maynard datasets
@@ -234,7 +226,7 @@ server <- function(input, output, session) {
   output$scRNA_heatmap_NON <- NULL
   output$summary_multiple_title <- NULL
   
-  # Single gene input ----
+  ## Single gene input ----
   observeEvent(input$submit_barplot, {
     #When the submit button is pressed, change to the Visualization page
     updateTabsetPanel(session, "tabset", selected = "visualization")
@@ -249,7 +241,7 @@ server <- function(input, output, session) {
     # All normalized values
     all_values <- MTG_matrix_scaled$mean_expression_scaled
     
-    # Single gene visualization; barplot
+    # Barplot
     output$Barplot <- renderPlot({
       ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Source_Dataset, 
                                       group = Source_Dataset)) +
@@ -281,6 +273,7 @@ server <- function(input, output, session) {
         xlab("\nCortical Layer") + ylab("mRNA expression (normalized)")
     }) 
     
+    # Barplot caption
     output$barplot_caption <- renderPrint({
       cat(paste("Fig 1. The barplots were created using the data from He et al 
                 and Maynard et al studies, and data from the Allen Institute 
@@ -301,7 +294,7 @@ server <- function(input, output, session) {
                                                 "Layer 4","Layer 5", "Layer 6", 
                                                 "White_matter")
     
-    #Generate correlation value for single gene, the quantile and associated p-value
+    # Generate correlation value for single gene, the quantile and associated p-value
     single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
                                                He_DS1_Human_averaged, 
                                                Maynard_dataset_average)
@@ -312,12 +305,12 @@ server <- function(input, output, session) {
                                       Maynard_dataset_average, 
                                       He_Maynard_cor_diagonal)
     
-    #Single gene summary table title
+    # Single gene summary table title
     output$summary_single_title <- renderPrint({
       cat(paste("Summary:"))
     })
     
-    #Single gene summary table ----
+    # Summary textbox
     output$summary_single <- renderPrint({
       cat(paste0(
         "Your submitted gene (",
@@ -329,9 +322,6 @@ server <- function(input, output, session) {
         if (sum(length(selected_gene_list_single %in% Maynard_dataset_average$gene_symbol)) == 0) {
           "not assayed by Maynard et al., "
         } else "assayed by Maynard et al., ",
-        if (sum(length(selected_gene_list_single %in% Zeng_dataset_long$gene_symbol)) == 0) {
-          "and not assayed by Zeng et al."
-        } else "assayed by Zeng et al.\n\n",
         "Between the He and Maynard datasets, ",
         selected_gene_list_single,
         " has a Pearson correlation value of ",
@@ -385,7 +375,7 @@ server <- function(input, output, session) {
   })
 
   
-  #Multiple gene input ----
+  ## Multiple genes ----
   observeEvent(input$submit_heatmap, {
     updateTabsetPanel(session, "tabset", selected = "visualization")
     
@@ -421,14 +411,22 @@ server <- function(input, output, session) {
                                         He_DS1_Human_averaged, Maynard_dataset_average, 
                                         He_Maynard_cor_diagonal)
     
-    ## Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
+    # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_Human_averaged, Maynard_dataset_average, 
                                   selected_gene_list_multiple) 
     AUROC_scRNA_data <- AUROC_scRNA(MTG_matrix_scaled, selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_scRNA_data)
     
-    #Bulk tissue RNA-seq heatmaps ---- 
+    # Set dynamic heatmap height
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
+    ### Heatmaps ----
+    
+    # Bulk-tissue expression figure title
+    output$bulk_figure_title <- renderPrint({
+      cat(paste('Bulk-tissue Gene Expression Heatmap'))
+    })
+    
+    # If less than 30 genes input, create heatmaps for bulk tissue
     if (length(selected_gene_list_multiple) <= 30) {
       output$He_figure <- renderPlot({
           ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, 
@@ -474,11 +472,6 @@ server <- function(input, output, session) {
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
-      
-      # Bulk-tissue expression figure title
-      output$bulk_figure_title <- renderPrint({
-        cat(paste('Bulk-tissue Gene Expression Heatmap'))
-      })
       
       # Bulk-tissue expression figure caption
       output$bulk_figure_caption <- renderPrint({
@@ -534,8 +527,13 @@ server <- function(input, output, session) {
                   genes."))
         })
     }
+    ### AUC heatmap ----
+    # Heatmap figure title
+    output$AUROC_heatmap_title <- renderPrint({
+      cat(paste('Layer-specific Gene Enrichment Heatmap'))
+    })
     
-    # AUROC table ----
+    # Heatmap figure
     output$AUROC_heatmap <- renderPlot({
       ggplot(data = AUROC_df, mapping = aes(x = dataset, y = Layer, fill = AUROC)) +
         geom_tile() +
@@ -559,25 +557,21 @@ server <- function(input, output, session) {
               legend.key.size = unit(1, 'cm'))
     })
     
-    # AUROC heatmap figure title
-    output$AUROC_heatmap_title <- renderPrint({
-      cat(paste('Layer-specific Gene Enrichment Heatmap'))
-    })
-    
-    # AUROC heatmap figure caption
+    # AUC heatmap figure caption
     output$AUROC_heatmap_caption <- renderPrint({
       cat(paste("Fig 1. The layers were ranked in each dataset with respect to 
                 the gene expression of the chosen genes, and the AUC score was 
                 calculated per layer. P-values were calcuated using the 
                 Mann-Whitney U test. Stars indicate p-value < 0.05."))
     })
+    # Summary textbox ----
     
     # Summary textbox title
     output$summary_multiple_title <- renderPrint({
       cat(paste('Summary Textbox'))
     })
     
-    # Summary textbox ----
+    # Summary textbox
     output$summary_multiple <- renderPrint({
       #count of intersection of submitted genes with total gene list
       cat(paste0(
@@ -637,9 +631,14 @@ server <- function(input, output, session) {
       ))
     })
     
-    # scRNA Heatmaps ----
+    # sNRNA Heatmaps ----
     
-    #Heatmap for scRNA data for GABAergic 
+    # sNRNA heatmap title
+    output$scRNA_figure_title <- renderPrint({
+      cat(paste('Cell type-specific Expression Heatmap'))
+    })
+    
+    # Heatmap for snRNA data 
     if (length(selected_gene_list_multiple) <= 30) {
       output$scRNA_heatmap_GABA <- renderPlot({
         ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
@@ -688,11 +687,6 @@ server <- function(input, output, session) {
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
-      
-      #scRNA heatmap title
-      output$scRNA_figure_title <- renderPrint({
-        cat(paste('Cell type-specific Expression Heatmap'))
-      })
       
       #scRNA heatmap caption
       output$scRNA_figure_caption <- renderPrint({
