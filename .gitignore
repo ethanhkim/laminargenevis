@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 .DS_Store
-laminar_transcriptome_app.Rproj
+transcriptome_app.Rproj
 **/Icon?
+rsconnect/
