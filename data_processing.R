@@ -167,21 +167,22 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
   return(Barplot_data)
 }
 
-separate_layers <- function(input_table, input_genelist) {
+separate_layers <- function(input_table, input_genelist, source) {
   
-  list_of_layers <- list()
-  
+  layer_markers <- list()
   for(i in c(1:7)) {
     layer <- input_table %>%
-      dplyr::filter(str_detect(source_dataset, 'Zeng')) %>%
-      dplyr::filter(gene_symbol %in% input_genelist, 
-                    layer_marker == i) %>% 
-      select(-"layer_marker", -"source_dataset")
-    layer_gene_symbol <- as.vector(layer$gene_symbol)
-    list_of_layers[[i]] <- layer_gene_symbol
+      filter(stri_detect_fixed(source_dataset, source)) %>%
+      filter(gene_symbol %in% input_genelist, layer_marker == i) %>%
+      pull(gene_symbol)
+    layer_markers[[i]] <- layer
   }
   
-  return(list_of_layers)
+  names(layer_markers) <- c("Layer_1", "Layer_2", "Layer_3", 
+                            "Layer_4", "Layer_5", "Layer_6",
+                            "WM")
+  
+  return(layer_markers)
 }
 
 

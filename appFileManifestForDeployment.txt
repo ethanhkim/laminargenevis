@@ -5,7 +5,7 @@ google-analytics.html
 /data/processed/Compared_Layer_markers.Rdata
 /data/processed/He_DS1_Human_averaged.Rdata
 /data/processed/Maynard_dataset_average.Rdata
-/data/processed/Zeng_dataset_long.Rdata
+/data/processed/layer_marker_table.Rdata
 /data/processed/He_Maynard_diag_genes.Rdata
 /data/processed/Allen_scRNA/MTG_matrix_scaled.Rdata
 /www/pageFigure.png
