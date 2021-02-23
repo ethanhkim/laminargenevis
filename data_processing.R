@@ -7,7 +7,7 @@ process_Zeng_dataset <- function(Zeng_dataset) {
 
 ## Function to generate top 95 and bottom 5% quantile values
 top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
-
+  
   Maynard_values <- Maynard_data %>%
     pivot_longer(cols = Layer_1:WM) %>%
     pull(var = "value")
@@ -152,8 +152,8 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
     mutate_at("Z_score", as.numeric) %>%
     mutate_at("layer_label", ~replace(., is.na(.), "")) %>%
     mutate(Source_Dataset = ifelse(test = str_detect(layers, "He"),
-                            yes = "He",
-                            no = "Maynard")) %>%
+                                   yes = "He",
+                                   no = "Maynard")) %>%
     mutate(Layer = case_when(
       str_detect(layers, "1") ~ "1", str_detect(layers, "2") ~ "2", str_detect(layers, "3") ~ "3",
       str_detect(layers, "4") ~ "4", str_detect(layers, "5") ~ "5", str_detect(layers, "6") ~ "6",

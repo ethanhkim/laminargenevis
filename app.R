@@ -36,7 +36,7 @@ load(here("data", "processed", "layer_marker_table.Rdata"))
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   tags$head(includeHTML("google-analytics.html"),
-    tags$style(HTML("
+            tags$style(HTML("
             #summary_multiple {
               font-family:  'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
               font-size: 14px;
@@ -46,145 +46,145 @@ ui <- fluidPage(
               font-size: 14px;
             }
                     ")),
-    tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
+            tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
   navbarPage(title = "LaminaRGeneVis", 
              
-  # Visualize gene expression across layers through heatmap or barplot    
-  tabPanel(title = "Gene Visualization",
-    sidebarLayout(
-      sidebarPanel(
-        # Single or multiple gene selector
-        radioButtons(
-          inputId = "selector", label =  "Choose to examine
+             # Visualize gene expression across layers through heatmap or barplot    
+             tabPanel(title = "Gene Visualization",
+                      sidebarLayout(
+                        sidebarPanel(
+                          # Single or multiple gene selector
+                          radioButtons(
+                            inputId = "selector", label =  "Choose to examine
           either a single gene, or multiple genes: \n",
-          choices = c("Single", "Multiple")
-        ),
-        # Single input side-panel  ----
-        conditionalPanel(
-          condition = "input.selector == 'Single'",
-          selectizeInput(
-            inputId = "genelist", label = "Input gene:", choices = NULL,
-            selected = 'RELN', multiple = FALSE, options = NULL),
-            actionButton(inputId = "submit_barplot", label = "Submit")
-        ),
-        # Multiple input side-panel ----     
-        conditionalPanel(
-          condition = "input.selector == 'Multiple'",
-          textAreaInput(
-            inputId = "multiple_genelist", 
-            label = "Input your gene list:", 
-            value = 'RELN, CUX2, FOXP2, RASGRF2'),
-            actionButton(inputId = "submit_heatmap", label = "Submit")
-        ),
-      ),
-      # Main page                 
-      mainPanel(
-        tabsetPanel(type = "tabs", id = "tabset",
-          #Page for displaying information about datasets ----
-          tabPanel(title = "App Overview", value = "overview",
-            br(),
-            h2("Welcome to LaminaRGeneVis!"),
-            br(),
-            p("This web application allows you to examine layer-specific gene 
+                            choices = c("Single", "Multiple")
+                          ),
+                          # Single input side-panel  ----
+                          conditionalPanel(
+                            condition = "input.selector == 'Single'",
+                            selectizeInput(
+                              inputId = "genelist", label = "Input gene:", choices = NULL,
+                              selected = 'RELN', multiple = FALSE, options = NULL),
+                            actionButton(inputId = "submit_barplot", label = "Submit")
+                          ),
+                          # Multiple input side-panel ----     
+                          conditionalPanel(
+                            condition = "input.selector == 'Multiple'",
+                            textAreaInput(
+                              inputId = "multiple_genelist", 
+                              label = "Input your gene list:", 
+                              value = 'RELN, CUX2, FOXP2, RASGRF2'),
+                            actionButton(inputId = "submit_heatmap", label = "Submit")
+                          ),
+                        ),
+                        # Main page                 
+                        mainPanel(
+                          tabsetPanel(type = "tabs", id = "tabset",
+                                      #Page for displaying information about datasets ----
+                                      tabPanel(title = "App Overview", value = "overview",
+                                               br(),
+                                               h2("Welcome to LaminaRGeneVis!"),
+                                               br(),
+                                               p("This web application allows you to examine layer-specific gene 
                expression across the cortex and determine layer annotations.", 
-                style='font-size:19px'),
-            br(),
-            h3("App Workflow:"),
-            p("Here's a quick overview of the app! Multiple datasets of 
+                                                 style='font-size:19px'),
+                                               br(),
+                                               h3("App Workflow:"),
+                                               p("Here's a quick overview of the app! Multiple datasets of 
               RNA-seq expression (described below) have been standardized 
               for ease of comparison as shown in (A). Users have the option of 
               choosing to examine either", strong("Single"), "or", strong("Multiple"),
-              "gene(s) in the HGNC gene symbol format. Choosing Single Gene
+                                                 "gene(s) in the HGNC gene symbol format. Choosing Single Gene
               will give you a plot similar to (B), and choosing Multiple Genes
               will give you multiple plots, including the plot shown in (C).", 
-              style = 'font-size:17px'),
-            br(),
-            img(src = 'pageFigure.png', style = "display: block; margin-left: 
+                                                 style = 'font-size:17px'),
+                                               br(),
+                                               img(src = 'pageFigure.png', style = "display: block; margin-left: 
                 auto; margin-right: auto;"),
-            br(),
-            h3("Source Data:"),
-            p("The data for this application has been sourced from these 
+                                               br(),
+                                               h3("Source Data:"),
+                                               p("The data for this application has been sourced from these 
                following studies and institutions:", style='font-size:17px'),
-            tags$ul(
-              # He et al description
-              tags$li(p(a("He et al. (2017):", 
-                      href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
-                      target = "_blank"), p("This study assayed the whole genome 
+                                               tags$ul(
+                                                 # He et al description
+                                                 tags$li(p(a("He et al. (2017):", 
+                                                             href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
+                                                             target = "_blank"), p("This study assayed the whole genome 
                       using high-throughput RNA-seq in samples from the DLPFC.")),
-                      style = 'font-size:17px'),
-              # Maynard et al description
-              tags$li(p(a("Maynard et al. (2020):", 
-                        href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", 
-                        target = "_blank"), p("This study assayed the whole genome 
+                                                         style = 'font-size:17px'),
+                                                 # Maynard et al description
+                                                 tags$li(p(a("Maynard et al. (2020):", 
+                                                             href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", 
+                                                             target = "_blank"), p("This study assayed the whole genome 
                         through the Visium Platform (10X Genomics) in samples from 
                         the DLPFC.")), style = 'font-size:17px'),
-              # AIBS description
-              tags$li(p(a("Allen Institute for Brain Science (AIBS): Cell-Type Database", 
-                        href = "https://portal.brain-map.org/atlases-and-data/
+                                                 # AIBS description
+                                                 tags$li(p(a("Allen Institute for Brain Science (AIBS): Cell-Type Database", 
+                                                             href = "https://portal.brain-map.org/atlases-and-data/
                         rnaseq/human-multiple-cortical-areas-smart-seq", 
-                        target = "_blank"), p("This dataset contains multiple 
+                                                             target = "_blank"), p("This dataset contains multiple 
                         cortical regions and assays the whole genome across roughly 
                         49,000 single-cell nuclei.")), style = 'font-size:17px'),
-            ),
-            br(),
-            tags$div(
-              'The code for the application and the analyses used are available on ',
-              tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
-                      "Github.")
-              , style = 'font-size:17px')),
-          # Single or multiple gene visualizations ----
-          tabPanel(title = "Gene Visualization", value = "visualization",
-            ### Single gene ----
-            br(),
-            conditionalPanel(
-              h3("Layer-specific gene expression"),
-              #Only show when the input selector is Single 
-              condition = "input.selector == 'Single'",
-              #Output barplot visualization
-              br(),
-              plotOutput("Barplot") %>% withSpinner(),
-              br(),
-              br(),
-              h5(textOutput("barplot_caption")),
-              br(),
-              br(),
-              p(verbatimTextOutput('summary_single')),
-            ),
-            # Multiple gene visualization ----
-            conditionalPanel(
-              h3("Layer-specific Heatmaps"),
-              #Only show when the input selector is Multiple
-              condition = "input.selector == 'Multiple'",
-              br(),
-              # Show summary heatmap of AUC values
-              h4(textOutput('AUROC_heatmap_title')),
-              plotOutput("AUROC_heatmap") %>% withSpinner(),
-              p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
-              br(),
-              #Output heatmap visualizations for bulk tissue RNA-seq
-              h4(textOutput('bulk_figure_title')),
-              br(),
-              plotOutput("He_figure", height = "auto") %>% withSpinner(),
-              plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
-              br(),
-              p(textOutput("bulk_figure_caption"),style='font-size:15px'),
-              br(),
-              #Output heatmap visualizations for scRNA-seq data per cell class type
-              h4(textOutput('scRNA_figure_title')),
-              br(),
-              plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
-              plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
-              plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
-              p(textOutput("scRNA_figure_caption"),style='font-size:15px'),
-              br(),
-              h4(textOutput('summary_multiple_title')),
-              p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
-            )
-           )
-          )
-        )
-      )
-    )
+                                               ),
+                                               br(),
+                                               tags$div(
+                                                 'The code for the application and the analyses used are available on ',
+                                                 tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
+                                                        "Github.")
+                                                 , style = 'font-size:17px')),
+                                      # Single or multiple gene visualizations ----
+                                      tabPanel(title = "Gene Visualization", value = "visualization",
+                                               ### Single gene ----
+                                               br(),
+                                               conditionalPanel(
+                                                 h3("Layer-specific gene expression"),
+                                                 #Only show when the input selector is Single 
+                                                 condition = "input.selector == 'Single'",
+                                                 #Output barplot visualization
+                                                 br(),
+                                                 plotOutput("Barplot") %>% withSpinner(),
+                                                 br(),
+                                                 br(),
+                                                 h5(textOutput("barplot_caption")),
+                                                 br(),
+                                                 br(),
+                                                 p(verbatimTextOutput('summary_single')),
+                                               ),
+                                               # Multiple gene visualization ----
+                                               conditionalPanel(
+                                                 h3("Layer-specific Heatmaps"),
+                                                 #Only show when the input selector is Multiple
+                                                 condition = "input.selector == 'Multiple'",
+                                                 br(),
+                                                 # Show summary heatmap of AUC values
+                                                 h4(textOutput('AUROC_heatmap_title')),
+                                                 plotOutput("AUROC_heatmap") %>% withSpinner(),
+                                                 p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
+                                                 br(),
+                                                 #Output heatmap visualizations for bulk tissue RNA-seq
+                                                 h4(textOutput('bulk_figure_title')),
+                                                 br(),
+                                                 plotOutput("He_figure", height = "auto") %>% withSpinner(),
+                                                 plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
+                                                 br(),
+                                                 p(textOutput("bulk_figure_caption"),style='font-size:15px'),
+                                                 br(),
+                                                 #Output heatmap visualizations for scRNA-seq data per cell class type
+                                                 h4(textOutput('scRNA_figure_title')),
+                                                 br(),
+                                                 plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
+                                                 plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
+                                                 plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
+                                                 p(textOutput("scRNA_figure_caption"),style='font-size:15px'),
+                                                 br(),
+                                                 h4(textOutput('summary_multiple_title')),
+                                                 p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
+                                               )
+                                      )
+                          )
+                        )
+                      )
+             )
   )
 )
 
@@ -330,7 +330,7 @@ server <- function(input, output, session) {
       ))
     }) 
   })
-
+  
   
   ## Multiple genes ----
   observeEvent(input$submit_heatmap, {
@@ -391,8 +391,8 @@ server <- function(input, output, session) {
     # If less than 30 genes input, create heatmaps for bulk tissue
     if (length(selected_gene_list_multiple) <= 30) {
       output$He_figure <- renderPlot({
-          ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, 
-                                                       fill = Z_score)) +
+        ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, 
+                                                     fill = Z_score)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
           scale_y_discrete(expand=c(0,0)) + 
@@ -480,14 +480,14 @@ server <- function(input, output, session) {
           labs(x = "Cortical Layer", y = "mRNA expression (normalized)", 
                title = "Maynard et al Scatter plot")
       }, height = heatmapHeight)
-
+      
       output$bulk_figure_caption <- renderPrint({
         cat(paste("Fig 2. The dot plots were created using the data from He et al 
                   and Maynard et al studies. The raw RNA-seq data was normalized 
                   using z-score normalization. The horizontal bars indicate the 
                   median of the gene expression values for that layer across all 
                   genes."))
-        })
+      })
     }
     ### AUC heatmap ----
     # Heatmap figure title
