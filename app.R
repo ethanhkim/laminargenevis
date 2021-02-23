@@ -27,9 +27,9 @@ source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Zeng_dataset_long.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Compared_Layer_markers.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Allen_scRNA", "MTG_matrix_scaled.Rdata"))
+load(here("Data", "processed", "layer_marker_table.Rdata"))
 
 
 # Define UI ----
@@ -45,7 +45,8 @@ ui <- fluidPage(
               font-family:  'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
               font-size: 14px;
             }
-                    "))),
+                    ")),
+    tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
   navbarPage(title = "LaminaRGeneVis", 
              
   # Visualize gene expression across layers through heatmap or barplot    
@@ -147,7 +148,7 @@ ui <- fluidPage(
               h5(textOutput("barplot_caption")),
               br(),
               br(),
-              verbatimTextOutput('summary_single'),
+              p(verbatimTextOutput('summary_single')),
             ),
             # Multiple gene visualization ----
             conditionalPanel(
@@ -194,10 +195,8 @@ server <- function(input, output, session) {
   common_genelist <- intersect(He_DS1_Human_averaged$gene_symbol, Maynard_dataset_average$gene_symbol) %>%
     sort()
   
-  # Table of layer-marker annotations provided by Zeng et al.
-  layer_marker_table <- Compared_Layer_Markers %>%
-    filter(!is.na(layer_marker)) %>%
-    filter(str_detect(source_dataset, 'Zeng'))
+  # Table of layer-marker annotations
+  layer_marker_df <- layer_marker_table
   
   # The diagonal of the p-value correlation matrix of He and Maynard gene expression values 
   He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
@@ -240,6 +239,19 @@ server <- function(input, output, session) {
                                          MTG_matrix_scaled)
     # All normalized values
     all_values <- MTG_matrix_scaled$mean_expression_scaled
+    
+    layer_marker_table_long <- layer_marker_df %>%
+      pivot_longer(cols=c("He", "Maynard"),
+                   names_to = "source_dataset",
+                   values_to = "layer_marker")
+    
+    # Layer marker for input gene
+    He_layer_marker <- separate_layers(layer_marker_table_long, 
+                                       selected_gene_list_single,
+                                       "He")
+    Maynard_layer_marker <- separate_layers(layer_marker_table_long, 
+                                            selected_gene_list_single,
+                                            "Maynard")
     
     # Barplot
     output$Barplot <- renderPlot({
@@ -286,13 +298,7 @@ server <- function(input, output, session) {
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations
     layer_marker_table_single <- layer_marker_table %>%
-      dplyr::filter(gene_symbol %in% selected_gene_list_single)
-    
-    layer_specific_gene_list_single <- separate_layers(layer_marker_table_single, 
-                                                       selected_gene_list_single)
-    names(layer_specific_gene_list_single) <- c("Layer 1", "Layer 2", "Layer 3", 
-                                                "Layer 4","Layer 5", "Layer 6", 
-                                                "White_matter")
+      filter(selected_gene_list_single %in% gene_symbol)
     
     # Generate correlation value for single gene, the quantile and associated p-value
     single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
@@ -313,63 +319,14 @@ server <- function(input, output, session) {
     # Summary textbox
     output$summary_single <- renderPrint({
       cat(paste0(
-        "Your submitted gene (",
-        selected_gene_list_single,
-        ") was found to be ",
-        if (sum(length(selected_gene_list_single %in% He_DS1_Human_averaged$gene_symbol)) == 0) {
-          "not assayed by He et al., "
-        } else "assayed by He et al., ",
-        if (sum(length(selected_gene_list_single %in% Maynard_dataset_average$gene_symbol)) == 0) {
-          "not assayed by Maynard et al., "
-        } else "assayed by Maynard et al., ",
-        "Between the He and Maynard datasets, ",
-        selected_gene_list_single,
-        " has a Pearson correlation value of ",
-        single_gene_cor,
-        ", ranking in the ",
-        single_gene_quantile,
-        "th quantile (p = ",
-        p_value_single_gene,
-        ").\n\n",
-        if (sum(length(selected_gene_list_single %in% Zeng_dataset_long$gene_symbol)) == 0) {
-          ""
-        } else paste0(
-          "Specifically in the Zeng dataset, ",
-          selected_gene_list_single,
-          " was found to ",
-          if (length(unlist(layer_specific_gene_list_single $`Layer 1`)) == 0 &
-              length(unlist(layer_specific_gene_list_single $`Layer 2`)) == 0 &
-              length(unlist(layer_specific_gene_list_single $`Layer 3`)) == 0 &
-              length(unlist(layer_specific_gene_list_single $`Layer 4`)) == 0 & 
-              length(unlist(layer_specific_gene_list_single $`Layer 5`)) == 0 &
-              length(unlist(layer_specific_gene_list_single $`Layer 6`)) == 0 &
-              length(unlist(layer_specific_gene_list_single $White_matter)) == 0) {
-            "not mark any layer."
-          } else {
-            paste0(
-              "mark ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 1`)) == 0) {
-                ""
-              } else "layer 1, ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 2`)) == 0) {
-                ""
-              } else "layer 2, ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 3`)) == 0) {
-                ""
-              } else "layer 3, ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 4`)) == 0) {
-                ""
-              } else "layer 4, ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 5`)) == 0) {
-                ""
-              } else "layer 5, ",
-              if (length(unlist(layer_specific_gene_list_single $`Layer 6`)) == 0) {
-                ""
-              } else "layer 6."
-            )
-          }
-        ),
-        sep="\n"
+        assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
+                            Maynard_dataset_average, "single"),
+        stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
+                     single_gene_quantile, "single"),
+        layer_marker_preempt_string("He", "single", selected_gene_list_single),
+        paste0(layer_marker_string(He_layer_marker, "single")),
+        layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
+        paste0(layer_marker_string(Maynard_layer_marker,  "single"))
       ))
     }) 
   })
@@ -396,12 +353,17 @@ server <- function(input, output, session) {
                                     "Non-neuronal") 
     
     # Filter the layer marker table for the genes inputted
-    layer_marker_table_multiple <- layer_marker_table %>%
-      dplyr::filter(gene_symbol %in% selected_gene_list_multiple)
-    layer_specific_gene_list_multiple <- separate_layers(layer_marker_table_multiple, 
-                                                         selected_gene_list_multiple)
-    names(layer_specific_gene_list_multiple) <- c("Layer 1", "Layer 2", "Layer 3", 
-                                                  "Layer 4", "Layer 5", "Layer 6")
+    layer_marker_table_long <- layer_marker_df %>%
+      pivot_longer(cols=c("He", "Maynard"),
+                   names_to = "source_dataset",
+                   values_to = "layer_marker")
+    
+    He_layer_marker <- separate_layers(layer_marker_table_long, 
+                                       selected_gene_list_multiple,
+                                       "He")
+    Maynard_layer_marker <- separate_layers(layer_marker_table_long, 
+                                            selected_gene_list_multiple,
+                                            "Maynard")
     
     # Generate correlation value for multiple gene and the quantile that value belongs in
     multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, 
@@ -573,67 +535,22 @@ server <- function(input, output, session) {
     
     # Summary textbox
     output$summary_multiple <- renderPrint({
-      #count of intersection of submitted genes with total gene list
       cat(paste0(
-        "You inputted ", length(selected_gene_list_multiple),
-        " genes. Of those genes:\n\n",
-        sum(selected_gene_list_multiple %in% unique(He_DS1_Human_averaged$gene_symbol)),
-        " genes were assayed by He et al., ",
-        sum(selected_gene_list_multiple %in% unique(Maynard_dataset_average$gene_symbol)),
-        " were assayed by Maynard et al., and ",
-        sum(selected_gene_list_multiple %in% unique(Zeng_dataset_long$gene_symbol)),
-        " were assayed by Zeng et al.\n\n",
+        assayed_gene_string(selected_gene_list_multiple, He_DS1_Human_averaged,
+                            Maynard_dataset_average, "multiple"),
         #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
-        "Between the He and Maynard datasets, across the layers, the input genes",
-        " had a mean Pearson correlation value of ", 
-        multi_gene_cor,
-        " (p = ",
-        p_value_multiple_gene,
-        "), which ranks in the ",
-        multi_gene_quantile,
-        "th quantile.\n\n",
-        "In the Zeng dataset, these genes marked these specific layers: \n\n",
-        if (length(unlist(layer_specific_gene_list_multiple $`Layer 1`)) == 0 &
-            length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0 &
-            length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0 &
-            length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0 & 
-            length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0 &
-            length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0 &
-            length(unlist(layer_specific_gene_list_multiple $White_matter)) == 0) {
-          "There were no genes that marked any layer."
-        } else {
-          paste0( if (length(unlist(layer_specific_gene_list_multiple$`Layer 1`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 1`))," gene(s) marked layer 1 (", 
-                        paste(layer_specific_gene_list_multiple $`Layer 1`, collapse = ", "), ").\n"),
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 2`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 2`)), " gene(s) marked layer 2 (", 
-                        paste(layer_specific_gene_list_multiple $`Layer 2`, collapse = ", "), ").\n"),
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 3`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 3`)), " gene(s) marked layer 3 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 3`, collapse = ", "), ").\n"),
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 4`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 4`)), " gene(s) marked layer 4 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 4`, collapse = ", "), ").\n"),
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 5`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 5`)), " gene(s) marked layer 5 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 5`, collapse = ", "), ").\n"),
-          if (length(unlist(layer_specific_gene_list_multiple $`Layer 6`)) == 0) {
-            ""
-          } else paste0(length(unlist(layer_specific_gene_list_multiple $`Layer 6`)), " gene(s) marked layer 6 (",
-                        paste(layer_specific_gene_list_multiple $`Layer 6`, collapse = ", "), ").\n"),
-          sep = "\n")
-        }
+        stats_string(selected_gene_list_multiple, multi_gene_cor, 
+                     p_value_multiple_gene, multi_gene_quantile, "multiple"),
+        layer_marker_preempt_string("He", "multiple", selected_gene_list_multiple),
+        paste0(layer_marker_string(He_layer_marker, "multiple")),
+        layer_marker_preempt_string("Maynard", "multiple", selected_gene_list_multiple),
+        paste0(layer_marker_string(Maynard_layer_marker, "multiple"))
       ))
     })
     
-    # sNRNA Heatmaps ----
+    # snRNA Heatmaps ----
     
-    # sNRNA heatmap title
+    # snRNA heatmap title
     output$scRNA_figure_title <- renderPrint({
       cat(paste('Cell type-specific Expression Heatmap'))
     })
