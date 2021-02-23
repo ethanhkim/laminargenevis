@@ -12,6 +12,7 @@ library(tidyr)
 library(dplyr)
 library(purrr)
 library(stringr)
+library(stringi)
 library(here)
 library(scales)
 library(ggdendro)
@@ -26,10 +27,9 @@ source("data_processing.R")
 # Load in data #
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Zeng_dataset_long.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Allen_scRNA", "MTG_matrix_scaled.Rdata"))
-load(here("Data", "processed", "layer_marker_table.Rdata"))
+load(here("data", "processed", "layer_marker_table.Rdata"))
 
 
 # Define UI ----
