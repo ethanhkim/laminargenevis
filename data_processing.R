@@ -17,7 +17,7 @@ top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
     pull(var = "value")
   
   AIBS_values <- AIBS_data %>%
-    pull(mean_expression_scaled)
+    pull(mean_expression)
   
   all_values <- c(Maynard_values, He_values, AIBS_values)
   
@@ -116,7 +116,7 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, sc
     as_tibble(rownames = NA)
   scRNA_barplpot_data <- scRNA_dataset %>%
     dplyr::filter(gene_symbol %in% input_genelist) %>%
-    rename("Z_score" = mean_expression_scaled, layer = cortical_layer_label) %>%
+    rename("Z_score" = mean_expression, layer = cortical_layer_label) %>%
     mutate(Layer = gsub("L", "Layer_", layer)) %>%
     unite(layers, c("class_label", "Layer"), sep = "_", remove = F) %>%
     mutate(Layer = gsub("Layer_", "", Layer)) %>%
@@ -287,7 +287,7 @@ rank_dataset_scRNA <- function(source_dataset) {
     ungroup() %>%
     pivot_wider(
       names_from = cortical_layer_label,
-      values_from = mean_expression_scaled
+      values_from = mean_expression
     )
   gene_symbol <- dataset_ranked$gene_symbol
   dataset_ranked %<>% select(L1:L6) %>% map_df(rank, ties.method = "min") %>%
@@ -451,6 +451,6 @@ scRNA_Heatmap_data <- function(data, genelist, cellType) {
   heatmap_data <- data %>%
     filter(gene_symbol %in% genelist) %>%
     filter(class_label == cellType) %>%
-    rename(Layer = cortical_layer_label, Mean_Expression = mean_expression_scaled, Cell_Type = class_label)
+    rename(Layer = cortical_layer_label, Mean_Expression = mean_expression, Cell_Type = class_label)
 }
 

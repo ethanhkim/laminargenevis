@@ -28,7 +28,7 @@ source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Allen_scRNA", "MTG_matrix_scaled.Rdata"))
+load(here("data", "processed", "AIBS_logCPM_dataset.Rdata"))
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
 
@@ -204,7 +204,7 @@ server <- function(input, output, session) {
   
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_dataset_average, He_DS1_Human_averaged, MTG_matrix_scaled
+    Maynard_dataset_average, He_DS1_Human_averaged, AIBS_logCPM_dataset
   )
   
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
@@ -236,9 +236,9 @@ server <- function(input, output, session) {
     Barplot_data <- process_barplot_data(selected_gene_list_single, 
                                          He_DS1_Human_averaged, 
                                          Maynard_dataset_average, 
-                                         MTG_matrix_scaled)
+                                         AIBS_logCPM_dataset)
     # All normalized values
-    all_values <- MTG_matrix_scaled$mean_expression_scaled
+    all_values <- AIBS_logCPM_dataset$mean_expression
     
     layer_marker_table_long <- layer_marker_df %>%
       pivot_longer(cols=c("He", "Maynard"),
@@ -345,11 +345,11 @@ server <- function(input, output, session) {
                                                      selected_gene_list_multiple)
     
     # Process scRNA heatmap data and separate by class
-    scRNA_GABA <- scRNA_Heatmap_data(MTG_matrix_scaled, selected_gene_list_multiple, 
+    scRNA_GABA <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
                                      "GABAergic")
-    scRNA_GLUT <- scRNA_Heatmap_data(MTG_matrix_scaled, selected_gene_list_multiple, 
+    scRNA_GLUT <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
                                      "Glutamatergic") 
-    scRNA_NON <- scRNA_Heatmap_data(MTG_matrix_scaled, selected_gene_list_multiple, 
+    scRNA_NON <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
                                     "Non-neuronal") 
     
     # Filter the layer marker table for the genes inputted
@@ -376,7 +376,7 @@ server <- function(input, output, session) {
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_Human_averaged, Maynard_dataset_average, 
                                   selected_gene_list_multiple) 
-    AUROC_scRNA_data <- AUROC_scRNA(MTG_matrix_scaled, selected_gene_list_multiple)
+    AUROC_scRNA_data <- AUROC_scRNA(AIBS_logCPM_dataset, selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_scRNA_data)
     
     # Set dynamic heatmap height
