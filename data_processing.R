@@ -370,8 +370,8 @@ AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
            pValue_Maynard = signif(pValue_Maynard, digits = 3),
            AUROC_He = signif(AUROC_He, digits = 3),
            AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
-           adjusted_P_He = signif(p.adjust(pValue_He), digits = 3),
-           adjusted_P_Maynard = signif(p.adjust(pValue_Maynard), digits = 3)) %>%
+           adjusted_P_He = signif(p.adjust(pValue_He, method = "bonferroni"), digits = 3),
+           adjusted_P_Maynard = signif(p.adjust(pValue_Maynard, method = "bonferroni"), digits = 3)) %>%
     select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard) %>%
     rename("AUROC (He)" = AUROC_He,
            "p-value (He)" = pValue_He,
@@ -417,7 +417,7 @@ AUROC_scRNA <- function(source_dataset, multiple_genelist) {
                  values_to = "pValue") %>%
     mutate(p_Value = gsub("pValue_", "", p_Value)) %>%
     rename(class_label = p_Value) %>%
-    mutate(pValue = p.adjust(pValue)) %>%
+    mutate(pValue = p.adjust(pValue, method = "bonferroni")) %>%
     mutate(pValue = ifelse(pValue > 0.05, NA, pValue))
   scRNA_AUROC_table %<>% select(starts_with("AUROC"), Layer) %>%
     pivot_longer(cols = starts_with("AUROC"),
