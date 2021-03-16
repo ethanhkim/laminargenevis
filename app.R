@@ -26,9 +26,11 @@ source("data_processing.R")
 
 # Load in data #
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
+load(here("data", "processed", "He_DS1_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
-load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
-load(here("data", "processed", "MTG_logCPM_dataset_lengthened.Rdata"))
+load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "He_Maynard_gene_correlation.Rdata"), verbose = TRUE)
+load(here("data", "processed", "MTG_logCPM_dataset.Rdata"))
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
 
@@ -198,13 +200,9 @@ server <- function(input, output, session) {
   # Table of layer-marker annotations
   layer_marker_df <- layer_marker_table
   
-  # The diagonal of the p-value correlation matrix of He and Maynard gene expression values 
-  He_Maynard_cor_diagonal <- He_Maynard_diag_genes %>%
-    pull(var = 1)
-  
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_dataset_average, He_DS1_Human_averaged, MTG_logCPM_dataset_lengthened
+    Maynard_logCPM_dataset, He_DS1_logCPM_dataset, MTG_logCPM_dataset
   )
   
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
@@ -237,8 +235,6 @@ server <- function(input, output, session) {
                                          He_DS1_logCPM_dataset, 
                                          Maynard_logCPM_dataset, 
                                          MTG_logCPM_dataset)
-    # All normalized values
-    all_values <- MTG_logCPM_dataset_lengthened$expression
     
     layer_marker_table_long <- layer_marker_df %>%
       pivot_longer(cols=c("He", "Maynard"),
@@ -281,7 +277,7 @@ server <- function(input, output, session) {
               legend.title = element_text(size = 12),
               legend.text = element_text(size = 11),
               plot.title = element_text(size=21)) +
-        xlab("\nCortical Layer") + ylab("mRNA expression (normalized)")
+        xlab("\nCortical Layer") + ylab("mRNA expression (log2(CPM))")
     }) 
     
     # Barplot caption
@@ -300,15 +296,15 @@ server <- function(input, output, session) {
       filter(selected_gene_list_single %in% gene_symbol)
     
     # Generate correlation value for single gene, the quantile and associated p-value
-    #single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
-                                               #He_DS1_Human_averaged, 
-                                               #Maynard_dataset_average)
-    #single_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, 
-                                                  #single_gene_cor)
-    #p_value_single_gene <- wilcoxtest(selected_gene_list_single, 
-                                      #He_DS1_Human_averaged, 
-                                      #Maynard_dataset_average, 
-                                      #He_Maynard_cor_diagonal)
+    single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
+                                               He_DS1_logCPM_dataset, 
+                                               Maynard_logCPM_dataset)
+    single_gene_quantile <- quantile_distribution(He_Maynard_gene_correlation, 
+                                                  single_gene_cor)
+    p_value_single_gene <- wilcoxtest(selected_gene_list_single, 
+                                       He_DS1_logCPM_dataset, 
+                                       Maynard_logCPM_dataset, 
+                                       He_Maynard_gene_correlation)
     
     # Single gene summary table title
     output$summary_single_title <- renderPrint({
@@ -316,18 +312,18 @@ server <- function(input, output, session) {
     })
     
     # Summary textbox
-    #output$summary_single <- renderPrint({
-    #  cat(paste0(
-    #    assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
-    #                        Maynard_dataset_average, "single"),
-    #    stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
-    #                 single_gene_quantile, "single"),
-    #    layer_marker_preempt_string("He", "single", selected_gene_list_single),
-    #    paste0(layer_marker_string(He_layer_marker, "single")),
-    #    layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
-    #    paste0(layer_marker_string(Maynard_layer_marker,  "single"))
-    #  ))
-    #}) 
+    output$summary_single <- renderPrint({
+      cat(paste0(
+        assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
+                            Maynard_dataset_average, "single"),
+        stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
+                     single_gene_quantile, "single"),
+        layer_marker_preempt_string("He", "single", selected_gene_list_single),
+        paste0(layer_marker_string(He_layer_marker, "single")),
+        layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
+        paste0(layer_marker_string(Maynard_layer_marker,  "single"))
+      ))
+    }) 
   })
   
   
@@ -373,10 +369,10 @@ server <- function(input, output, session) {
     # Generate correlation value for multiple gene and the quantile that value belongs in
     multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, 
                                              He_DS1_Human_averaged, Maynard_dataset_average)
-    multi_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, multi_gene_cor)
+    multi_gene_quantile <- quantile_distribution(He_Maynard_gene_correlation, multi_gene_cor)
     p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, 
                                         He_DS1_Human_averaged, Maynard_dataset_average, 
-                                        He_Maynard_cor_diagonal)
+                                        He_Maynard_gene_correlation)
     
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_Human_averaged, Maynard_dataset_average, 
@@ -401,10 +397,7 @@ server <- function(input, output, session) {
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
           scale_y_discrete(expand=c(0,0)) + 
-          scale_x_discrete(expand=c(0,0), 
-                           breaks = c("Layer_1", "Layer_2", "Layer_3", "Layer_4",
-                                      "Layer_5", "Layer_6", "WM"),
-                           labels=c("L1","L2","L3","L4","L5","L6","WM")) +
+          scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "He et al data", 
                fill = "Gene Expression\n(normalized)") +
           #Puts stars on layer marker annotations
@@ -423,10 +416,7 @@ server <- function(input, output, session) {
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
           scale_y_discrete(expand=c(0,0)) + 
-          scale_x_discrete(expand=c(0,0), 
-                           breaks = c("Layer_1", "Layer_2", "Layer_3", "Layer_4",
-                                      "Layer_5", "Layer_6", "WM"),
-                           labels=c("L1","L2","L3","L4","L5","L6","WM")) +
+          scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
                fill = "Gene Expression\n(normalized)") +
           #Puts stars on layer marker annotations

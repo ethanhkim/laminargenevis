@@ -10,15 +10,16 @@ process_Zeng_dataset <- function(Zeng_dataset) {
 top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
   
   Maynard_values <- Maynard_data %>%
-    pivot_longer(cols = Layer_1:WM) %>%
+    pivot_longer(cols = L1:WM) %>%
     pull(var = "value")
   
   He_values <- He_data %>%
-    pivot_longer(cols = Layer_1:WM) %>%
+    pivot_longer(cols = L1:WM) %>%
     pull(var = "value")
   
   AIBS_values <- AIBS_data %>%
-    pull(expression)
+    pivot_longer(cols = L1:WM) %>%
+    pull(var = "value")
   
   all_values <- c(Maynard_values, He_values, AIBS_values)
   
@@ -128,7 +129,7 @@ process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset,
     filter(gene_symbol %in% input_genelist) %>%
     add_column(source_dataset = "Maynard")
   allen_MTG_data <- Allen_dataset %>%
-    filter(gene_symbol %in% testlist) %>% 
+    filter(gene_symbol %in% input_genelist) %>% 
     mutate(source_dataset = paste("ABI", class_label, sep = "_")) %>%
     select(-class_label) %>% 
     select(gene_symbol, L1, L2, L3, L4, L5, L6, WM, source_dataset)
@@ -164,17 +165,17 @@ separate_layers <- function(input_table, input_genelist, source) {
 
 ## Functions for generating singe or multi-gene correlations across He & Maynard datasets
 
-single_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
+single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
   
   He_gene <- He_dataset %>%
     select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_genes) %>%
+    filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t()
   
   Maynard_gene <- Maynard_dataset %>%
     select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_genes) %>%
+    filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
   
@@ -212,17 +213,19 @@ multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
 
 
 ## Function for generating quantile
-
-quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
+quantile_distribution <- function(dataset_correlation, selected_gene_correlation) {
   
-  quantile_distribution <- ecdf(dataset_diagonal)
-  multiple_genes_quantile <- quantile_distribution(genes_diagonal)
-  multiple_genes_quantile <- multiple_genes_quantile * 100
+  # Create quantiles using ecdf()
+  quantile_distribution <- ecdf(dataset_correlation)
+  # Query quantile of the selected gene's correlation
+  query_quantile <- quantile_distribution(selected_gene_correlation)
+  # Multiply by 100
+  quantile <- query_quantile * 100
   
-  return(format(floor(multiple_genes_quantile)))
+  return(format(floor(quantile)))
 }
 
-## Function for Wilcoxon test
+## Function for creating p-value for correlation of user-selected genes
 wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
   
   He_genes <- He_dataset %>%
@@ -235,9 +238,9 @@ wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_d
     column_to_rownames(var = "gene_symbol") %>%
     t() 
   
-  # Pearson's correlation test
+  # Pearson's correlation test for the user-selected genes
   He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
-  # Get the diagonal (correlation of each gene against each other)
+  # Get the diagonal (correlation of each gene against itself)
   He_Maynard_diag_genes <- diag(He_Maynard_genes_cormatrix, names = TRUE)
   
   # P-value on Pearson's
