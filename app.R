@@ -28,7 +28,7 @@ source("data_processing.R")
 load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_diag_genes.Rdata"), verbose = TRUE)
-load(here("data", "processed", "AIBS_logCPM_dataset.Rdata"))
+load(here("data", "processed", "MTG_logCPM_dataset_lengthened.Rdata"))
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
 
@@ -204,7 +204,7 @@ server <- function(input, output, session) {
   
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_dataset_average, He_DS1_Human_averaged, AIBS_logCPM_dataset
+    Maynard_dataset_average, He_DS1_Human_averaged, MTG_logCPM_dataset_lengthened
   )
   
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
@@ -234,11 +234,11 @@ server <- function(input, output, session) {
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     # Process dataset to correct format for heatmap and barplot
     Barplot_data <- process_barplot_data(selected_gene_list_single, 
-                                         He_DS1_Human_averaged, 
-                                         Maynard_dataset_average, 
-                                         AIBS_logCPM_dataset)
+                                         He_DS1_logCPM_dataset, 
+                                         Maynard_logCPM_dataset, 
+                                         MTG_logCPM_dataset)
     # All normalized values
-    all_values <- AIBS_logCPM_dataset$mean_expression
+    all_values <- MTG_logCPM_dataset_lengthened$expression
     
     layer_marker_table_long <- layer_marker_df %>%
       pivot_longer(cols=c("He", "Maynard"),
@@ -255,8 +255,9 @@ server <- function(input, output, session) {
     
     # Barplot
     output$Barplot <- renderPlot({
-      ggplot(data = Barplot_data, aes(x = Layer, y = Z_score, fill = Source_Dataset, 
-                                      group = Source_Dataset)) +
+      ggplot(data = Barplot_data, aes(x = layer, y = expression, 
+                                      fill = source_dataset, 
+                                      group = source_dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
         ggtitle(paste0('Expression of ', selected_gene_list_single, 
                        ' across the human neocortex')) +
@@ -272,9 +273,7 @@ server <- function(input, output, session) {
                                      "AIBS: GABA (MTG)", 
                                      "AIBS: GLUT (MTG)",
                                      "AIBS: Non-neuron (MTG)")) +
-        scale_x_discrete(name = "\nCortical Layer",
-                         breaks = c("1", "2", "3", "4", "5", "6", "WM"),
-                         labels = c("L1", "L2", "L3", "L4", "L5", "L6", "WM")) +
+        scale_x_discrete(name = "\nCortical Layer") +
         theme(axis.text.x = element_text(size = 13), 
               axis.text.y = element_text(size = 13),
               axis.title.x = element_text(size = 17),
@@ -301,15 +300,15 @@ server <- function(input, output, session) {
       filter(selected_gene_list_single %in% gene_symbol)
     
     # Generate correlation value for single gene, the quantile and associated p-value
-    single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
-                                               He_DS1_Human_averaged, 
-                                               Maynard_dataset_average)
-    single_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, 
-                                                  single_gene_cor)
-    p_value_single_gene <- wilcoxtest(selected_gene_list_single, 
-                                      He_DS1_Human_averaged, 
-                                      Maynard_dataset_average, 
-                                      He_Maynard_cor_diagonal)
+    #single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
+                                               #He_DS1_Human_averaged, 
+                                               #Maynard_dataset_average)
+    #single_gene_quantile <- quantile_distribution(He_Maynard_cor_diagonal, 
+                                                  #single_gene_cor)
+    #p_value_single_gene <- wilcoxtest(selected_gene_list_single, 
+                                      #He_DS1_Human_averaged, 
+                                      #Maynard_dataset_average, 
+                                      #He_Maynard_cor_diagonal)
     
     # Single gene summary table title
     output$summary_single_title <- renderPrint({
@@ -317,18 +316,18 @@ server <- function(input, output, session) {
     })
     
     # Summary textbox
-    output$summary_single <- renderPrint({
-      cat(paste0(
-        assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
-                            Maynard_dataset_average, "single"),
-        stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
-                     single_gene_quantile, "single"),
-        layer_marker_preempt_string("He", "single", selected_gene_list_single),
-        paste0(layer_marker_string(He_layer_marker, "single")),
-        layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
-        paste0(layer_marker_string(Maynard_layer_marker,  "single"))
-      ))
-    }) 
+    #output$summary_single <- renderPrint({
+    #  cat(paste0(
+    #    assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
+    #                        Maynard_dataset_average, "single"),
+    #    stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
+    #                 single_gene_quantile, "single"),
+    #    layer_marker_preempt_string("He", "single", selected_gene_list_single),
+    #    paste0(layer_marker_string(He_layer_marker, "single")),
+    #    layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
+    #    paste0(layer_marker_string(Maynard_layer_marker,  "single"))
+    #  ))
+    #}) 
   })
   
   
@@ -338,19 +337,25 @@ server <- function(input, output, session) {
     
     # Create a vector of selected genes
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
-    # Process He & Maynard data according to input genes
-    He_heatmap_data <- process_heatmap_function(He_DS1_Human_averaged, 
-                                                selected_gene_list_multiple)
-    Maynard_heatmap_data <- process_heatmap_function(Maynard_dataset_average, 
-                                                     selected_gene_list_multiple)
-    
-    # Process scRNA heatmap data and separate by class
-    scRNA_GABA <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
-                                     "GABAergic")
-    scRNA_GLUT <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
-                                     "Glutamatergic") 
-    scRNA_NON <- scRNA_Heatmap_data(AIBS_logCPM_dataset, selected_gene_list_multiple, 
-                                    "Non-neuronal") 
+    # Process data with input genes
+    He_heatmap_data <- process_heatmap_data(source = "He",
+                                            source_dataset = He_DS1_logCPM_dataset, 
+                                            input_genelist = selected_gene_list_multiple)
+    Maynard_heatmap_data <- process_heatmap_data(source = "Maynard",
+                                                 source_dataset = Maynard_logCPM_dataset, 
+                                                 input_genelist = selected_gene_list_multiple)
+    Allen_GABA_heatmap_data <- process_heatmap_data(source = "Allen",
+                                                    source_dataset = MTG_logCPM_dataset,
+                                                    input_genelist = selected_gene_list_multiple,
+                                                    cell_type = "GABAergic")
+    Allen_GLUT_heatmap_data <- process_heatmap_data(source = "Allen",
+                                                    source_dataset = MTG_logCPM_dataset,
+                                                    input_genelist = selected_gene_list_multiple,
+                                                    cell_type = "Glutamatergic")
+    Allen_NONN_heatmap_data <- process_heatmap_data(source = "Allen",
+                                                    source_dataset = MTG_logCPM_dataset,
+                                                    input_genelist = selected_gene_list_multiple,
+                                                    cell_type = "Non-neuronal")
     
     # Filter the layer marker table for the genes inputted
     layer_marker_table_long <- layer_marker_df %>%
@@ -376,7 +381,7 @@ server <- function(input, output, session) {
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_Human_averaged, Maynard_dataset_average, 
                                   selected_gene_list_multiple) 
-    AUROC_scRNA_data <- AUROC_scRNA(AIBS_logCPM_dataset, selected_gene_list_multiple)
+    AUROC_scRNA_data <- AUROC_scRNA(MTG_logCPM_dataset_lengthened, selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_scRNA_data)
     
     # Set dynamic heatmap height
@@ -558,9 +563,9 @@ server <- function(input, output, session) {
     # Heatmap for snRNA data 
     if (length(selected_gene_list_multiple) <= 30) {
       output$scRNA_heatmap_GABA <- renderPlot({
-        ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
+        ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_fill_distiller(palette = "RdYlBu") +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
                fill = "Mean Expression\n(normalized)") +
@@ -574,9 +579,9 @@ server <- function(input, output, session) {
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_GLUT <- renderPlot({
-        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
+        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_fill_distiller(palette = "RdYlBu") +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
                fill = "Mean Expression\n(normalized)") +
@@ -590,9 +595,9 @@ server <- function(input, output, session) {
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_NON <- renderPlot({
-        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = gene_symbol, fill = Mean_Expression)) +
+        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_fill_distiller(palette = "RdYlBu") +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
                fill = "Mean Expression\n(normalized)") +
@@ -619,10 +624,10 @@ server <- function(input, output, session) {
     } else {
       output$scRNA_heatmap_GABA <- renderPlot({
         scRNA_GABA %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% 
-                                     summarize(median_rank = median(Mean_Expression)), 
+                                     summarize(median_rank = median(Expression)), 
                                    by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, 
+          ggplot(aes(x = Layer, y = Expression, group = Layer, 
                      names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
@@ -635,10 +640,10 @@ server <- function(input, output, session) {
       
       output$scRNA_heatmap_GLUT <- renderPlot({
         scRNA_GLUT %<>% inner_join(scRNA_GLUT %>% group_by(Layer) %>% 
-                                     summarize(median_rank = median(Mean_Expression)), 
+                                     summarize(median_rank = median(Expression)), 
                                    by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, fill = Layer)) +
+          ggplot(aes(x = Layer, y = Expression, group = Layer, names = gene_symbol, fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
@@ -650,10 +655,10 @@ server <- function(input, output, session) {
       
       output$scRNA_heatmap_NON <- renderPlot({
         scRNA_NON %<>% inner_join(scRNA_NON %>% group_by(Layer) %>% 
-                                    summarize(median_rank = median(Mean_Expression)), 
+                                    summarize(median_rank = median(Expression)), 
                                   by = "Layer") %>%
           mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Mean_Expression, group = Layer, names = gene_symbol, 
+          ggplot(aes(x = Layer, y = Expression, group = Layer, names = gene_symbol, 
                      fill = Layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +

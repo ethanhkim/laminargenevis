@@ -5,6 +5,7 @@ process_Zeng_dataset <- function(Zeng_dataset) {
     select("gene_symbol", "marker_annotation", "expression_level")
 }
 
+
 ## Function to generate top 95 and bottom 5% quantile values
 top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
   
@@ -17,7 +18,7 @@ top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
     pull(var = "value")
   
   AIBS_values <- AIBS_data %>%
-    pull(mean_expression)
+    pull(expression)
   
   all_values <- c(Maynard_values, He_values, AIBS_values)
   
@@ -38,133 +39,110 @@ heatmap_height <- function(genelist) {
   }
 }
 
-## Function to process heatmap data ##
-process_heatmap_function <- function(source_dataset, input_genelist){
+## Function to process heatmap data for bulk-tissue and sn-RNAseq ##
+process_heatmap_data <- function(source, source_dataset, input_genelist, 
+                                     cell_type = NA) {
   
-  processed_heatmap_data <- source_dataset %>%
-    dplyr::filter(gene_symbol %in% input_genelist) %>%
-    distinct(gene_symbol, .keep_all = TRUE) %>%
-    as.matrix()
-  
-  processed_heatmap_data[is.nan(processed_heatmap_data)] <- 0
-  
-  processed_heatmap_data %<>% 
-    as_tibble() %>%
-    #Filter out genes that have NA for all layers
-    filter_at(vars(Layer_1, Layer_2, Layer_3, Layer_4, Layer_5, Layer_6, WM),all_vars(!is.na(.))) %>%
-    mutate_if(is.numeric,as.character, is.factor, as.character) %>%
-    pivot_longer(
-      Layer_1:Layer_6,
-      names_to = "layer"
-    ) %>%
-    select(-"marker_label") %>%
-    # Create significance markers depending on if gene is marked in a specific layer
-    mutate(layer_label = 
-             case_when(
-               Layer_1_marker == layer ~ "*",
-               Layer_2_marker == layer ~ "*",
-               Layer_3_marker == layer ~ "*",
-               Layer_4_marker == layer ~ "*",
-               Layer_5_marker == layer ~ "*",
-               Layer_6_marker == layer ~ "*"
-             )) %>%
-    select(gene_symbol, layer, value, layer_label) %>%
-    rename(Z_score = "value") %>%
-    mutate_at("Z_score", as.numeric) %>%
-    mutate_at("layer_label", ~replace(., is.na(.), ""))
+  # If processing Allen data:
+  if (source == "Allen") {
+    # Filter source data to only take specific cell_type
+    source_dataset %<>% filter(class_label == cell_type)
+    # Create heatmap data
+    processed_heatmap_data <- source_dataset %>%
+      # Filter for genes in inputted gene list
+      filter(gene_symbol %in% input_genelist) %>%
+      # Filter out duplicate genes
+      distinct(gene_symbol, .keep_all = TRUE) %>%
+      # Lengthen wide data
+      pivot_longer(cols = L1:WM, names_to = "cortical_layer_label",
+                   values_to = "expression") %>%
+      # Rename cortical_layer_label column to layer
+      rename(layer = cortical_layer_label) %>%
+      # Remove class_label column
+      select(-class_label)
+  # If processing bulk-tissue (i.e., He or Maynard)
+  } else if (source == "He" | source == "Maynard") {
+    # Create heatmap data
+    processed_heatmap_data <- source_dataset %>%
+      # Filter for genes in inputted gene list
+      filter(gene_symbol %in% input_genelist) %>%
+      # Filter out duplicate genes
+      distinct(gene_symbol, .keep_all = TRUE) %>%
+      as.matrix()
+    
+    # Set NaN values to 0
+    processed_heatmap_data[is.nan(processed_heatmap_data)] <- 0
+    
+    processed_heatmap_data %<>% 
+      as_tibble() %>%
+      #Filter out genes that have NA for all layers
+      filter_at(vars(L1, L2, L3, L4, L5, L6, WM),
+                all_vars(!is.na(.))) %>%
+      mutate_if(is.numeric,as.character, is.factor, as.character) %>%
+      # Lengthen wide data
+      pivot_longer(cols = L1:WM, names_to = "layer", values_to = "expression"
+      ) %>%
+      # Select gene_symbol, layer, expression columns in order
+      select(gene_symbol, layer, expression) %>%
+      # Mutate expression column to be numeric (just in case it's chr)
+      mutate_at("expression", as.numeric)
+  }
   
   #Order data according to similarity in expression profile
   ordered_data <- source_dataset %>%
-    dplyr::filter(gene_symbol %in% input_genelist) %>%
-    distinct(gene_symbol, .keep_all = TRUE) %>%
+    # Filter out for genes in gene list
+    filter(gene_symbol %in% input_genelist) %>%
+    # Replace NA values with 0
     replace_na(list(
-      Layer_1 = 0,
-      Layer_2 = 0,
-      Layer_3 = 0,
-      Layer_4 = 0,
-      Layer_5 = 0,
-      Layer_6 = 0,
-      WM = 0
-    )) %>%
+      L1 = 0, L2 = 0, L3 = 0, L4 = 0, L5 = 0,
+      L6 = 0, WM = 0)) %>%
     mutate_if(is.numeric,as.character, is.factor, as.character) %>%
     select("gene_symbol":"WM")
   
+  # Code to order data according to similarity in expression profile
   ordered_data_matrix <- as.matrix(ordered_data)
   rownames(ordered_data) <- ordered_data$gene_symbol
   data_dendro <- as.dendrogram(hclust(d = dist(x = ordered_data_matrix)))
   
   data_order <- order.dendrogram(data_dendro)
   
-  processed_heatmap_data$gene_symbol <- factor(x = processed_heatmap_data$gene_symbol,
-                                               levels = ordered_data$gene_symbol[data_order], 
-                                               ordered = TRUE)
+  # Set order in processed heatmap data to match the order
+  processed_heatmap_data$gene_symbol <- 
+    factor(x = processed_heatmap_data$gene_symbol,
+           levels = ordered_data$gene_symbol[data_order], 
+           ordered = TRUE)
   
+  # Return ordered heatmap data in long format
   return(processed_heatmap_data)
 }
 
 ## Function to process barplot data ##
 
-process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, scRNA_dataset) {
+process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, 
+                                 Allen_dataset) {
   
-  He_barplot_data <- He_dataset %>%
-    dplyr::filter(gene_symbol %in% input_genelist) %>%
-    t() %>%
-    as_tibble(rownames = NA)
-  Maynard_barplot_data <- Maynard_dataset %>%
-    dplyr::filter(gene_symbol %in% input_genelist) %>%
-    t() %>%
-    as_tibble(rownames = NA)
-  scRNA_barplpot_data <- scRNA_dataset %>%
-    dplyr::filter(gene_symbol %in% input_genelist) %>%
-    rename("Z_score" = mean_expression, layer = cortical_layer_label) %>%
-    mutate(Layer = gsub("L", "Layer_", layer)) %>%
-    unite(layers, c("class_label", "Layer"), sep = "_", remove = F) %>%
-    mutate(Layer = gsub("Layer_", "", Layer)) %>%
-    rename(Source_Dataset = class_label) %>%
-    mutate(Source_Dataset = paste("ABI", Source_Dataset, sep = "_")) %>%
-    add_column(layer_label = "") %>%
-    select(gene_symbol, layers, Z_score, layer_label, Source_Dataset, Layer)
+  he_data <- He_dataset %>%
+    filter(gene_symbol %in% input_genelist) %>%
+    add_column(source_dataset = "He")
+  maynard_data <- Maynard_dataset %>%
+    filter(gene_symbol %in% input_genelist) %>%
+    add_column(source_dataset = "Maynard")
+  allen_MTG_data <- Allen_dataset %>%
+    filter(gene_symbol %in% testlist) %>% 
+    mutate(source_dataset = paste("ABI", class_label, sep = "_")) %>%
+    select(-class_label) %>% 
+    select(gene_symbol, L1, L2, L3, L4, L5, L6, WM, source_dataset)
   
-  Barplot_data <- He_barplot_data %>%
-    rownames_to_column(var = "variables") %>%
-    add_column("Maynard_data" = Maynard_barplot_data$V1) %>%
-    column_to_rownames(var = "variables") %>%
-    t() %>%
-    as_tibble(rownames = NA) %>% 
-    pivot_longer(cols = c("Layer_1", "Layer_2", "Layer_3", "Layer_4", "Layer_5", "Layer_6", "WM"),
-                 names_to = "layer") %>%
-    dplyr::rename(Z_score = "value") %>%
-    add_column("layers" = c("He_Layer_1", "He_Layer_2", "He_Layer_3", "He_Layer_4", 
-                            "He_Layer_5", "He_Layer_6", "He_WM", "Maynard_Layer_1",
-                            "Maynard_Layer_2", "Maynard_Layer_3", "Maynard_Layer_4", 
-                            "Maynard_Layer_5", "Maynard_Layer_6","Maynard_WM")) %>%
-    mutate(layer_label = 
-             case_when(
-               Layer_1_marker == layer ~ "*",
-               Layer_2_marker == layer ~ "*",
-               Layer_3_marker == layer ~ "*",
-               Layer_4_marker == layer ~ "*",
-               Layer_5_marker == layer ~ "*",
-               Layer_6_marker == layer ~ "*",
-               Layer_WM_marker == layer ~ "*"
-             )) %>%
-    select(gene_symbol, layers, Z_score, layer_label) %>%
-    mutate_at("Z_score", as.numeric) %>%
-    mutate_at("layer_label", ~replace(., is.na(.), "")) %>%
-    mutate(Source_Dataset = ifelse(test = str_detect(layers, "He"),
-                                   yes = "He",
-                                   no = "Maynard")) %>%
-    mutate(Layer = case_when(
-      str_detect(layers, "1") ~ "1", str_detect(layers, "2") ~ "2", str_detect(layers, "3") ~ "3",
-      str_detect(layers, "4") ~ "4", str_detect(layers, "5") ~ "5", str_detect(layers, "6") ~ "6",
-      str_detect(layers, "WM") ~ "WM"
-    ))
-  
-  Barplot_data %<>%
-    rbind(scRNA_barplpot_data) %>%
-    mutate(Source_Dataset = factor(Source_Dataset, levels = c("He", "Maynard", "ABI_GABAergic", "ABI_Glutamatergic", "ABI_Non-neuronal")))
-  
-  return(Barplot_data)
+  barplot_data <- rbind(he_data, maynard_data, 
+                        allen_MTG_data) %>%
+    pivot_longer(cols = L1:WM,
+                 names_to = "layer",
+                 values_to = "expression") %>%
+    mutate(source_dataset = factor(source_dataset, 
+                                   levels = c("He", "Maynard", "ABI_GABAergic", 
+                                              "ABI_Glutamatergic", 
+                                              "ABI_Non-neuronal")))
+  return(barplot_data)
 }
 
 separate_layers <- function(input_table, input_genelist, source) {
@@ -178,10 +156,8 @@ separate_layers <- function(input_table, input_genelist, source) {
     layer_markers[[i]] <- layer
   }
   
-  names(layer_markers) <- c("Layer_1", "Layer_2", "Layer_3", 
-                            "Layer_4", "Layer_5", "Layer_6",
-                            "WM")
-  
+  names(layer_markers) <- c("L1", "L2", "L3", "L4", "L5", "L6", "WM")
+
   return(layer_markers)
 }
 
@@ -247,17 +223,15 @@ quantile_distribution <- function(dataset_diagonal, genes_diagonal) {
 }
 
 ## Function for Wilcoxon test
-wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
+wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_diagonal) {
   
   He_genes <- He_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_genes) %>%
+    filter(gene_symbol %in% input_genelist) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t()
   
   Maynard_genes <- Maynard_dataset %>%
-    select(gene_symbol:WM) %>%
-    filter(gene_symbol %in% input_genes) %>%
+    filter(gene_symbol %in% input_genelist) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
   
@@ -275,7 +249,7 @@ wilcoxtest <- function(input_genes, He_dataset, Maynard_dataset, He_Maynard_diag
 #Function for ranking bulk tissue datasets
 rank_bulk_dataset <- function(source_dataset) {
   dataset_ranked <- source_dataset %>%
-    select(Layer_1:WM) %>%
+    select(L1:WM) %>%
     map_df(rank)
   dataset_ranked$gene_symbol <- source_dataset$gene_symbol
   return(dataset_ranked)
@@ -283,12 +257,7 @@ rank_bulk_dataset <- function(source_dataset) {
 
 #Function for ranking scRNA datasets
 rank_dataset_scRNA <- function(source_dataset) {
-  dataset_ranked <- source_dataset %>%
-    ungroup() %>%
-    pivot_wider(
-      names_from = cortical_layer_label,
-      values_from = mean_expression
-    )
+  dataset_ranked <- source_dataset 
   gene_symbol <- dataset_ranked$gene_symbol
   dataset_ranked %<>% select(L1:L6) %>% map_df(rank, ties.method = "min") %>%
     add_column(gene_symbol = gene_symbol, class_label = "GABAergic")
@@ -442,15 +411,5 @@ AUROC_data <- function(scRNA_AUROC_table, bulk_AUROC_table) {
     mutate(dataset = gsub("\\)", "", dataset))
   AUROC_table$Layer <- factor(AUROC_table$Layer, levels = c("WM", "L6", "L5", "L4", "L3", "L2", "L1"))
   return(AUROC_table)
-}
-
-
-#scRNA Heatmaps ---- 
-
-scRNA_Heatmap_data <- function(data, genelist, cellType) {
-  heatmap_data <- data %>%
-    filter(gene_symbol %in% genelist) %>%
-    filter(class_label == cellType) %>%
-    rename(Layer = cortical_layer_label, Mean_Expression = mean_expression, Cell_Type = class_label)
 }
 
