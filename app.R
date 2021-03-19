@@ -25,9 +25,7 @@ source("string_processing.R")
 source("data_processing.R")
 
 # Load in data #
-load(here("data", "processed", "He_DS1_Human_averaged.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_DS1_logCPM_dataset.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Maynard_dataset_average.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_gene_correlation.Rdata"), verbose = TRUE)
 load(here("data", "processed", "MTG_logCPM_dataset.Rdata"))
@@ -37,156 +35,177 @@ load(here("data", "processed", "layer_marker_table.Rdata"))
 # Define UI ----
 ui <- fluidPage(
   shinyjs::useShinyjs(),
-  tags$head(includeHTML("google-analytics.html"),
-            tags$style(HTML("
-            #summary_multiple {
-              font-family:  'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
-              font-size: 14px;
-            }
-            #summary_single {
-              font-family:  'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
-              font-size: 14px;
-            }
-                    ")),
-            tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
-  navbarPage(title = "LaminaRGeneVis", 
-             
-             # Visualize gene expression across layers through heatmap or barplot    
-             tabPanel(title = "Gene Visualization",
-                      sidebarLayout(
-                        sidebarPanel(
-                          # Single or multiple gene selector
-                          radioButtons(
-                            inputId = "selector", label =  "Choose to examine
-          either a single gene, or multiple genes: \n",
-                            choices = c("Single", "Multiple")
-                          ),
-                          # Single input side-panel  ----
-                          conditionalPanel(
-                            condition = "input.selector == 'Single'",
-                            selectizeInput(
-                              inputId = "genelist", label = "Input gene:", choices = NULL,
-                              selected = 'RELN', multiple = FALSE, options = NULL),
-                            actionButton(inputId = "submit_barplot", label = "Submit")
-                          ),
-                          # Multiple input side-panel ----     
-                          conditionalPanel(
-                            condition = "input.selector == 'Multiple'",
-                            textAreaInput(
-                              inputId = "multiple_genelist", 
-                              label = "Input your gene list:", 
-                              value = 'RELN, CUX2, FOXP2, RASGRF2'),
-                            actionButton(inputId = "submit_heatmap", label = "Submit")
-                          ),
-                        ),
-                        # Main page                 
-                        mainPanel(
-                          tabsetPanel(type = "tabs", id = "tabset",
-                                      #Page for displaying information about datasets ----
-                                      tabPanel(title = "App Overview", value = "overview",
-                                               br(),
-                                               h2("Welcome to LaminaRGeneVis!"),
-                                               br(),
-                                               p("This web application allows you to examine layer-specific gene 
-               expression across the cortex and determine layer annotations.", 
-                                                 style='font-size:19px'),
-                                               br(),
-                                               h3("App Workflow:"),
-                                               p("Here's a quick overview of the app! Multiple datasets of 
-              RNA-seq expression (described below) have been standardized 
-              for ease of comparison as shown in (A). Users have the option of 
-              choosing to examine either", strong("Single"), "or", strong("Multiple"),
-                                                 "gene(s) in the HGNC gene symbol format. Choosing Single Gene
-              will give you a plot similar to (B), and choosing Multiple Genes
-              will give you multiple plots, including the plot shown in (C).", 
-                                                 style = 'font-size:17px'),
-                                               br(),
-                                               img(src = 'pageFigure.png', style = "display: block; margin-left: 
-                auto; margin-right: auto;"),
-                                               br(),
-                                               h3("Source Data:"),
-                                               p("The data for this application has been sourced from these 
-               following studies and institutions:", style='font-size:17px'),
-                                               tags$ul(
-                                                 # He et al description
-                                                 tags$li(p(a("He et al. (2017):", 
-                                                             href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
-                                                             target = "_blank"), p("This study assayed the whole genome 
-                      using high-throughput RNA-seq in samples from the DLPFC.")),
-                                                         style = 'font-size:17px'),
-                                                 # Maynard et al description
-                                                 tags$li(p(a("Maynard et al. (2020):", 
-                                                             href = "https://www.biorxiv.org/content/10.1101/2020.02.28.969931v1", 
-                                                             target = "_blank"), p("This study assayed the whole genome 
-                        through the Visium Platform (10X Genomics) in samples from 
-                        the DLPFC.")), style = 'font-size:17px'),
-                                                 # AIBS description
-                                                 tags$li(p(a("Allen Institute for Brain Science (AIBS): Cell-Type Database", 
-                                                             href = "https://portal.brain-map.org/atlases-and-data/
-                        rnaseq/human-multiple-cortical-areas-smart-seq", 
-                                                             target = "_blank"), p("This dataset contains multiple 
-                        cortical regions and assays the whole genome across roughly 
-                        49,000 single-cell nuclei.")), style = 'font-size:17px'),
-                                               ),
-                                               br(),
-                                               tags$div(
-                                                 'The code for the application and the analyses used are available on ',
-                                                 tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
-                                                        "Github.")
-                                                 , style = 'font-size:17px')),
-                                      # Single or multiple gene visualizations ----
-                                      tabPanel(title = "Gene Visualization", value = "visualization",
-                                               ### Single gene ----
-                                               br(),
-                                               conditionalPanel(
-                                                 h3("Layer-specific gene expression"),
-                                                 #Only show when the input selector is Single 
-                                                 condition = "input.selector == 'Single'",
-                                                 #Output barplot visualization
-                                                 br(),
-                                                 plotOutput("Barplot") %>% withSpinner(),
-                                                 br(),
-                                                 br(),
-                                                 h5(textOutput("barplot_caption")),
-                                                 br(),
-                                                 br(),
-                                                 p(verbatimTextOutput('summary_single')),
-                                               ),
-                                               # Multiple gene visualization ----
-                                               conditionalPanel(
-                                                 h3("Layer-specific Heatmaps"),
-                                                 #Only show when the input selector is Multiple
-                                                 condition = "input.selector == 'Multiple'",
-                                                 br(),
-                                                 # Show summary heatmap of AUC values
-                                                 h4(textOutput('AUROC_heatmap_title')),
-                                                 plotOutput("AUROC_heatmap") %>% withSpinner(),
-                                                 p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
-                                                 br(),
-                                                 #Output heatmap visualizations for bulk tissue RNA-seq
-                                                 h4(textOutput('bulk_figure_title')),
-                                                 br(),
-                                                 plotOutput("He_figure", height = "auto") %>% withSpinner(),
-                                                 plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
-                                                 br(),
-                                                 p(textOutput("bulk_figure_caption"),style='font-size:15px'),
-                                                 br(),
-                                                 #Output heatmap visualizations for scRNA-seq data per cell class type
-                                                 h4(textOutput('scRNA_figure_title')),
-                                                 br(),
-                                                 plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
-                                                 plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
-                                                 plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
-                                                 p(textOutput("scRNA_figure_caption"),style='font-size:15px'),
-                                                 br(),
-                                                 h4(textOutput('summary_multiple_title')),
-                                                 p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
-                                               )
-                                      )
-                          )
-                        )
-                      )
-             )
+  tags$head(
+    includeHTML("google-analytics.html"),
+    tags$style(
+    HTML("#summary_multiple {
+              font-family: 
+                'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+              font-size: 
+                14px; }
+          #summary_single {
+              font-family: 
+                'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+              font-size: 
+                14px;
+            }")),
+    tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
+  navbarPage(
+    title = "LaminaRGeneVis", 
+    # Visualize gene expression across layers through heatmap or barplot
+    tabPanel(
+      title = "Gene Visualization",
+      # Side panel for gene selection
+      sidebarLayout(
+        sidebarPanel(
+          # Single or multiple gene selector
+          radioButtons(
+            inputId = "selector",
+            label =  "Choose to examine either a single gene, 
+            or multiple genes: \n", 
+            choices = c("Single", "Multiple")),
+          # Single input side-panel  ----
+          conditionalPanel(
+            condition = "input.selector == 'Single'",
+            # Drop-down bar
+            selectizeInput(
+              inputId = "genelist", label = "Input gene:", 
+              choices = NULL, selected = 'RELN', multiple = FALSE, 
+              options = NULL),
+            # Submit button
+            actionButton(inputId = "submit_barplot", label = "Submit")),
+          # Multiple input side-panel ----
+          conditionalPanel(
+            condition = "input.selector == 'Multiple'",
+            # Text box
+            textAreaInput(
+              inputId = "multiple_genelist", 
+              label = "Input your gene list:", 
+              value = 'RELN, CUX2, FOXP2, RASGRF2'),
+            # Submit button
+            actionButton(inputId = "submit_heatmap", label = "Submit")),
+          ),
+        # Main page
+        mainPanel(
+          tabsetPanel(
+            type = "tabs", id = "tabset",
+            #Page for displaying information about datasets ----
+            tabPanel(
+              title = "App Overview", value = "overview",
+              br(),
+              h2("Welcome to LaminaRGeneVis!"),
+              br(),
+              p("This web application allows you to examine layer-specific 
+                 gene expression across the cortex and determine layer
+                 annotations.", style='font-size:19px'),
+               br(),
+               h3("App Workflow:"),
+               p("Here's a quick overview of the app! Multiple datasets of 
+                  RNA-seq expression (described below) have been standardized 
+                  for ease of comparison as shown in (A). Users have the option 
+                  of choosing to examine either", strong("Single"), "or", 
+                  strong("Multiple"),"gene(s) in the HGNC gene symbol 
+                  format. Choosing Single Gene will give you a plot similar 
+                  to (B), and choosing Multiple Genes will give you multiple 
+                  plots, including the plot shown in (C).", 
+                  style = 'font-size:17px'),
+              br(),
+              # Figure
+              img(src = 'pageFigure.png', 
+                  style = "display: block; margin-left: auto; 
+                           margin-right: auto;"),
+              br(),
+              h3("Source Data:"),
+              p("The data for this application has been sourced from 
+                 these following studies and institutions:", 
+                style='font-size:17px'),
+              # Bullet points for describing datasets
+              tags$ul(
+                # He et al description
+                tags$li(p(a("He et al. (2017):", 
+                             href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
+                             target = "_blank"), 
+                             p("This study assayed the whole genome using
+                                high-throughput RNA-seq in samples from the 
+                               DLPFC.")), style = 'font-size:17px'),
+                # Maynard et al description
+                tags$li(p(a("Maynard et al. (2021):", 
+                             href = "https://www.nature.com/articles/s41593-020-00787-0", 
+                             target = "_blank"), 
+                             p("This study assayed the whole genome through 
+                                the Visium Platform (10X Genomics) in samples 
+                                from the DLPFC.")), style = 'font-size:17px'),
+                # AIBS description
+                tags$li(p(a("Allen Institute for Brain Science (AIBS): 
+                             Cell-Type Database", 
+                             href = "https://portal.brain-map.org/atlases-and-data/
+                                     rnaseq/human-multiple-cortical-areas-smart-seq", 
+                             target = "_blank"), 
+                             p("This dataset contains multiple cortical regions 
+                                and assays the whole genome across roughly 
+                                49,000 single-cell nuclei.")), 
+                                style = 'font-size:17px'),
+                ),
+              br(),
+              # Github link
+              tags$div(
+                'The code for the application and the analyses used are available on ',
+                tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
+                       "Github."), style = 'font-size:17px')),
+            # Single or multiple gene visualizations ----
+            tabPanel(
+              title = "Gene Visualization", value = "visualization",
+              ### Single gene visualization ----
+              br(),
+              conditionalPanel(
+                h3("Layer-specific gene expression"),
+                #Only show when the input selector is Single
+                condition = "input.selector == 'Single'",
+                #Output barplot visualization
+                br(),
+                plotOutput("Barplot") %>% withSpinner(),
+                br(),
+                br(),
+                h5(textOutput("barplot_caption")),
+                br(),
+                br(),
+                p(verbatimTextOutput('summary_single')),
+              ),
+              ### Multiple gene visualization ----
+              conditionalPanel(
+                h3("Layer-specific Heatmaps"),
+                #Only show when the input selector is Multiple
+                condition = "input.selector == 'Multiple'",
+                br(),
+                # Show AUC heatmap
+                h4(textOutput('AUROC_heatmap_title')),
+                plotOutput("AUROC_heatmap") %>% withSpinner(),
+                p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
+                br(),
+                #Output heatmap visualizations for bulk tissue RNA-seq
+                h4(textOutput('bulk_figure_title')),
+                br(),
+                plotOutput("He_figure", height = "auto") %>% withSpinner(),
+                plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
+                br(),
+                p(textOutput("bulk_figure_caption"),style='font-size:15px'),
+                br(),
+                #Output heatmap visualizations for Allen data per cell class type
+                h4(textOutput('scRNA_figure_title')),
+                br(),
+                plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
+                plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
+                plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
+                p(textOutput("scRNA_figure_caption"),style='font-size:15px'),
+                br(),
+                h4(textOutput('summary_multiple_title')),
+                p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
+              )
+            )
+          )
+        )
+      )
+    )
   )
 )
 
@@ -194,7 +213,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # List of genes that are common through the He and Maynard datasets
-  common_genelist <- intersect(He_DS1_Human_averaged$gene_symbol, Maynard_dataset_average$gene_symbol) %>%
+  common_genelist <- intersect(He_DS1_logCPM_dataset$gene_symbol, Maynard_logCPM_dataset$gene_symbol) %>%
     sort()
   
   # Table of layer-marker annotations
@@ -231,29 +250,32 @@ server <- function(input, output, session) {
     # List of selected gene(s)
     selected_gene_list_single <- isolate(process_gene_input(input$genelist))
     # Process dataset to correct format for heatmap and barplot
-    Barplot_data <- process_barplot_data(selected_gene_list_single, 
-                                         He_DS1_logCPM_dataset, 
-                                         Maynard_logCPM_dataset, 
-                                         MTG_logCPM_dataset)
+    Barplot_data <- process_barplot_data(
+      input_genelist = selected_gene_list_single,
+      He_dataset = He_DS1_logCPM_dataset, 
+      Maynard_dataset = Maynard_logCPM_dataset,
+      Allen_dataset = MTG_logCPM_dataset)
     
     layer_marker_table_long <- layer_marker_df %>%
-      pivot_longer(cols=c("He", "Maynard"),
-                   names_to = "source_dataset",
-                   values_to = "layer_marker")
+      pivot_longer(
+        cols=c("He", "Maynard"), names_to = "source_dataset",
+        values_to = "layer_marker")
     
     # Layer marker for input gene
-    He_layer_marker <- separate_layers(layer_marker_table_long, 
-                                       selected_gene_list_single,
-                                       "He")
-    Maynard_layer_marker <- separate_layers(layer_marker_table_long, 
-                                            selected_gene_list_single,
-                                            "Maynard")
+    He_layer_marker <- separate_layers(
+      input_table = layer_marker_table_long, 
+      input_genelist = selected_gene_list_single,
+      source = "He")
+    Maynard_layer_marker <- separate_layers(
+      input_table = layer_marker_table_long,
+      input_genelist = selected_gene_list_single,
+      source = "Maynard")
     
     # Barplot
     output$Barplot <- renderPlot({
-      ggplot(data = Barplot_data, aes(x = layer, y = expression, 
-                                      fill = source_dataset, 
-                                      group = source_dataset)) +
+      ggplot(
+        data = Barplot_data, 
+        aes(x = layer, y = expression, fill = source_dataset, group = source_dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
         ggtitle(paste0('Expression of ', selected_gene_list_single, 
                        ' across the human neocortex')) +
@@ -262,13 +284,11 @@ server <- function(input, output, session) {
         geom_hline(yintercept = top_and_bottom_5th_perc$bottom_5,
                    color="black", linetype="dashed") +
         theme_bw() + 
-        scale_fill_discrete(name="Source Dataset",
-                            breaks=c("He", "Maynard", "ABI_GABAergic", 
-                                     "ABI_Glutamatergic", "ABI_Non-neuronal"),
-                            labels=c("He (DLPFC)", "Maynard (DLPFC)", 
-                                     "AIBS: GABA (MTG)", 
-                                     "AIBS: GLUT (MTG)",
-                                     "AIBS: Non-neuron (MTG)")) +
+        scale_fill_discrete(
+          name="Source Dataset", 
+          breaks=c("He", "Maynard", "ABI_GABAergic", "ABI_Glutamatergic", "ABI_Non-neuronal"),
+          labels=c("He (DLPFC)", "Maynard (DLPFC)", "AIBS: GABA (MTG)", "AIBS: GLUT (MTG)",
+                   "AIBS: Non-neuron (MTG)")) +
         scale_x_discrete(name = "\nCortical Layer") +
         theme(axis.text.x = element_text(size = 13), 
               axis.text.y = element_text(size = 13),
@@ -295,16 +315,21 @@ server <- function(input, output, session) {
     layer_marker_table_single <- layer_marker_table %>%
       filter(selected_gene_list_single %in% gene_symbol)
     
-    # Generate correlation value for single gene, the quantile and associated p-value
-    single_gene_cor <- single_gene_correlation(selected_gene_list_single, 
-                                               He_DS1_logCPM_dataset, 
-                                               Maynard_logCPM_dataset)
-    single_gene_quantile <- quantile_distribution(He_Maynard_gene_correlation, 
-                                                  single_gene_cor)
-    p_value_single_gene <- wilcoxtest(selected_gene_list_single, 
-                                       He_DS1_logCPM_dataset, 
-                                       Maynard_logCPM_dataset, 
-                                       He_Maynard_gene_correlation)
+    # Generate correlation value for single gene
+    single_gene_cor <- single_gene_correlation(
+      input_gene = selected_gene_list_single, 
+      He_dataset = He_DS1_logCPM_dataset, 
+      Maynard_dataset = Maynard_logCPM_dataset)
+    # Generate what quantile the gene-to-gene correlation would be in
+    single_gene_quantile <- quantile_distribution(
+      dataset_correlation = He_Maynard_gene_correlation, 
+      selected_gene_correlation = single_gene_cor)
+    # Generate p-value for gene-to-gene correlation
+    p_value_single_gene <- wilcoxtest(
+      input_genelist = selected_gene_list_single, 
+      He_dataset = He_DS1_logCPM_dataset, 
+      Maynard_dataset = Maynard_logCPM_dataset, 
+      He_Maynard_gene_correlation)
     
     # Single gene summary table title
     output$summary_single_title <- renderPrint({
@@ -314,10 +339,17 @@ server <- function(input, output, session) {
     # Summary textbox
     output$summary_single <- renderPrint({
       cat(paste0(
-        assayed_gene_string(selected_gene_list_single, He_DS1_Human_averaged,
-                            Maynard_dataset_average, "single"),
-        stats_string(selected_gene_list_single, single_gene_cor, p_value_single_gene, 
-                     single_gene_quantile, "single"),
+        assayed_gene_string(
+          genelist = selected_gene_list_single, 
+          He_df = He_DS1_logCPM_dataset,
+          Maynard_df = Maynard_logCPM_dataset, 
+          single_or_multiple = "single"),
+        stats_string(
+          genelist = selected_gene_list_single, 
+          correlation = single_gene_cor, 
+          p_value = p_value_single_gene, 
+          quantile_stat = single_gene_quantile, 
+          single_or_multiple = "single"),
         layer_marker_preempt_string("He", "single", selected_gene_list_single),
         paste0(layer_marker_string(He_layer_marker, "single")),
         layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
@@ -334,24 +366,21 @@ server <- function(input, output, session) {
     # Create a vector of selected genes
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     # Process data with input genes
-    He_heatmap_data <- process_heatmap_data(source = "He",
-                                            source_dataset = He_DS1_logCPM_dataset, 
-                                            input_genelist = selected_gene_list_multiple)
-    Maynard_heatmap_data <- process_heatmap_data(source = "Maynard",
-                                                 source_dataset = Maynard_logCPM_dataset, 
-                                                 input_genelist = selected_gene_list_multiple)
-    Allen_GABA_heatmap_data <- process_heatmap_data(source = "Allen",
-                                                    source_dataset = MTG_logCPM_dataset,
-                                                    input_genelist = selected_gene_list_multiple,
-                                                    cell_type = "GABAergic")
-    Allen_GLUT_heatmap_data <- process_heatmap_data(source = "Allen",
-                                                    source_dataset = MTG_logCPM_dataset,
-                                                    input_genelist = selected_gene_list_multiple,
-                                                    cell_type = "Glutamatergic")
-    Allen_NONN_heatmap_data <- process_heatmap_data(source = "Allen",
-                                                    source_dataset = MTG_logCPM_dataset,
-                                                    input_genelist = selected_gene_list_multiple,
-                                                    cell_type = "Non-neuronal")
+    He_heatmap_data <- process_heatmap_data(
+      source = "He", source_dataset = He_DS1_logCPM_dataset, 
+      input_genelist = selected_gene_list_multiple)
+    Maynard_heatmap_data <- process_heatmap_data(
+      source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
+      input_genelist = selected_gene_list_multiple)
+    Allen_GABA_heatmap_data <- process_heatmap_data(
+      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
+    Allen_GLUT_heatmap_data <- process_heatmap_data(
+      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
+    Allen_NONN_heatmap_data <- process_heatmap_data(
+      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
     
     # Filter the layer marker table for the genes inputted
     layer_marker_table_long <- layer_marker_df %>%
@@ -368,16 +397,16 @@ server <- function(input, output, session) {
     
     # Generate correlation value for multiple gene and the quantile that value belongs in
     multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, 
-                                             He_DS1_Human_averaged, Maynard_dataset_average)
+                                             He_DS1_logCPM_dataset, Maynard_logCPM_dataset)
     multi_gene_quantile <- quantile_distribution(He_Maynard_gene_correlation, multi_gene_cor)
     p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, 
-                                        He_DS1_Human_averaged, Maynard_dataset_average, 
+                                        He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
                                         He_Maynard_gene_correlation)
     
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
-    AUROC_bulk_data <- AUROC_bulk(He_DS1_Human_averaged, Maynard_dataset_average, 
+    AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
                                   selected_gene_list_multiple) 
-    AUROC_scRNA_data <- AUROC_scRNA(MTG_logCPM_dataset_lengthened, selected_gene_list_multiple)
+    AUROC_scRNA_data <- AUROC_scRNA(MTG_logCPM_dataset, selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_scRNA_data)
     
     # Set dynamic heatmap height
@@ -392,16 +421,17 @@ server <- function(input, output, session) {
     # If less than 30 genes input, create heatmaps for bulk tissue
     if (length(selected_gene_list_multiple) <= 30) {
       output$He_figure <- renderPlot({
-        ggplot(data = He_heatmap_data, mapping = aes(x = layer, y = gene_symbol, 
-                                                     fill = Z_score)) +
+        He_heatmap_data %<>% 
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(data = He_heatmap_data, mapping = aes(x = gene_symbol, y = layer, 
+                                                     fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "He et al data", 
-               fill = "Gene Expression\n(normalized)") +
-          #Puts stars on layer marker annotations
-          geom_text(aes(label = layer_label), size = 7, vjust = 1) +
+               fill = "Gene Expression\n(log2(CPM + 1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -411,16 +441,17 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
+        Maynard_heatmap_data %<>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
         ggplot(data = Maynard_heatmap_data, 
-               mapping = aes(x = layer, y = gene_symbol, fill = Z_score)) +
+               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3,3)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
-               fill = "Gene Expression\n(normalized)") +
-          #Puts stars on layer marker annotations
-          geom_text(aes(label = layer_label), size = 7, vjust = 1) +
+               fill = "Gene Expression\n(log2(CPM+1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -440,39 +471,41 @@ server <- function(input, output, session) {
       # Scatterplots
       output$He_figure <- renderPlot({
         He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
-                                          summarize(median_rank = median(Z_score)), 
+                                          summarize(median_rank = median(expression)), 
                                         by = "layer") %>%
-          mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", 
-                                                  "Layer_4", "Layer_5", "Layer_6"))) %>%
-          ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, 
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
                      fill = layer)) +
           # Median line
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
-          ylim(-3, 3) +
+          # Limit set to min and max expression value across all datasets
+          ylim(0,16) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Cortical Layer", y = "mRNA expression (normalized)", 
+          labs(x = "Cortical Layer", y = "mRNA expression (log2(CPM+1))", 
                title = "He et al Scatter plot")
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
         Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
                                                group_by(layer) %>% 
-                                               summarize(median_rank = median(Z_score)), 
+                                               summarize(median_rank = median(expression)), 
                                              by = "layer") %>%
-          mutate(layer = factor(layer, levels = c("Layer_1", "Layer_2", "Layer_3", 
-                                                  "Layer_4", "Layer_5", "Layer_6"))) %>%
-          ggplot(aes(x = layer, y = Z_score, group = layer, names = gene_symbol, 
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
                      fill = layer)) +
           # Median line
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
           geom_jitter(width = .05, alpha = 0.4) +
-          ylim(-3, 3) +
+          # Limit set to min and max expression value across all datasets
+          ylim(0,16) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Cortical Layer", y = "mRNA expression (normalized)", 
+          labs(x = "Cortical Layer", y = "mRNA expression (log2(CPM+1))", 
                title = "Maynard et al Scatter plot")
       }, height = heatmapHeight)
       
@@ -531,8 +564,8 @@ server <- function(input, output, session) {
     # Summary textbox
     output$summary_multiple <- renderPrint({
       cat(paste0(
-        assayed_gene_string(selected_gene_list_multiple, He_DS1_Human_averaged,
-                            Maynard_dataset_average, "multiple"),
+        assayed_gene_string(selected_gene_list_multiple, He_DS1_logCPM_dataset,
+                            Maynard_logCPM_dataset, "multiple"),
         #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
         stats_string(selected_gene_list_multiple, multi_gene_cor, 
                      p_value_multiple_gene, multi_gene_quantile, "multiple"),
@@ -553,9 +586,10 @@ server <- function(input, output, session) {
     # Heatmap for snRNA data 
     if (length(selected_gene_list_multiple) <= 30) {
       output$scRNA_heatmap_GABA <- renderPlot({
-        ggplot(data = scRNA_GABA, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
+        ggplot(data = Allen_GABA_heatmap_data, 
+               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
                fill = "Mean Expression\n(normalized)") +
@@ -569,9 +603,10 @@ server <- function(input, output, session) {
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_GLUT <- renderPlot({
-        ggplot(data = scRNA_GLUT, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
+        ggplot(data = Allen_GLUT_heatmap_data, 
+               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
                fill = "Mean Expression\n(normalized)") +
@@ -585,9 +620,10 @@ server <- function(input, output, session) {
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_NON <- renderPlot({
-        ggplot(data = scRNA_NON, mapping = aes(x = Layer, y = gene_symbol, fill = Expression)) +
+        ggplot(data = Allen_NONN_heatmap_data, 
+               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu") +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
                fill = "Mean Expression\n(normalized)") +
@@ -613,49 +649,52 @@ server <- function(input, output, session) {
       })
     } else {
       output$scRNA_heatmap_GABA <- renderPlot({
-        scRNA_GABA %<>% inner_join(scRNA_GABA %>% group_by(Layer) %>% 
-                                     summarize(median_rank = median(Expression)), 
-                                   by = "Layer") %>%
-          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Expression, group = Layer, 
-                     names = gene_symbol, fill = Layer)) +
+        Allen_GABA_heatmap_data %<>% 
+          inner_join(Allen_GABA_heatmap_data %>% group_by(layer) %>% 
+                       summarize(median_rank = median(expression)), 
+                                   by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, 
+                     names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) +
-          ylim(-3, 3) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Z score", title = "GABAergic Expression")
+          labs(x = "Layer", y = "Expression", title = "GABAergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_GLUT <- renderPlot({
-        scRNA_GLUT %<>% inner_join(scRNA_GLUT %>% group_by(Layer) %>% 
-                                     summarize(median_rank = median(Expression)), 
-                                   by = "Layer") %>%
-          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Expression, group = Layer, names = gene_symbol, fill = Layer)) +
+        Allen_GLUT_heatmap_data %<>% inner_join(Allen_GLUT_heatmap_data %>% group_by(layer) %>% 
+                                     summarize(median_rank = median(expression)), 
+                                   by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5",
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, 
+                     names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) +
-          ylim(-3, 3) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Z score", title = "Glutamatergic Expression")
+          labs(x = "Layer", y = "Expression", title = "Glutamatergic Expression")
       }, height = heatmapHeight)
       
       output$scRNA_heatmap_NON <- renderPlot({
-        scRNA_NON %<>% inner_join(scRNA_NON %>% group_by(Layer) %>% 
-                                    summarize(median_rank = median(Expression)), 
-                                  by = "Layer") %>%
-          mutate(Layer = factor(Layer, levels = c("L1", "L2", "L3", "L4", "L5", "L6"))) %>%
-          ggplot(aes(x = Layer, y = Expression, group = Layer, names = gene_symbol, 
-                     fill = Layer)) +
+        Allen_NONN_heatmap_data %<>% inner_join(Allen_NONN_heatmap_data 
+                                                %>% group_by(layer) %>% 
+                                    summarize(median_rank = median(expression)), 
+                                  by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, 
+                     names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) +
-          ylim(-3, 3) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Z score", title = "Non-neuronal Expression")
+          labs(x = "Layer", y = "Expression", title = "Non-neuronal Expression")
       }, height = heatmapHeight)
       
       output$scRNA_figure_caption <- renderPrint({

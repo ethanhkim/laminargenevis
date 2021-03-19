@@ -101,17 +101,17 @@ process_heatmap_data <- function(source, source_dataset, input_genelist,
     select("gene_symbol":"WM")
   
   # Code to order data according to similarity in expression profile
-  ordered_data_matrix <- as.matrix(ordered_data)
-  rownames(ordered_data) <- ordered_data$gene_symbol
-  data_dendro <- as.dendrogram(hclust(d = dist(x = ordered_data_matrix)))
+  #ordered_data_matrix <- as.matrix(ordered_data)
+  #rownames(ordered_data) <- ordered_data$gene_symbol
+  #data_dendro <- as.dendrogram(hclust(d = dist(x = ordered_data_matrix)))
   
-  data_order <- order.dendrogram(data_dendro)
+  #data_order <- order.dendrogram(data_dendro)
   
   # Set order in processed heatmap data to match the order
-  processed_heatmap_data$gene_symbol <- 
-    factor(x = processed_heatmap_data$gene_symbol,
-           levels = ordered_data$gene_symbol[data_order], 
-           ordered = TRUE)
+  #processed_heatmap_data$gene_symbol <- 
+  #  factor(x = processed_heatmap_data$gene_symbol,
+  #         levels = ordered_data$gene_symbol[data_order], 
+  #         ordered = TRUE)
   
   # Return ordered heatmap data in long format
   return(processed_heatmap_data)
