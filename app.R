@@ -213,7 +213,8 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # List of genes that are common through the He and Maynard datasets
-  common_genelist <- intersect(He_DS1_logCPM_dataset$gene_symbol, Maynard_logCPM_dataset$gene_symbol) %>%
+  common_genelist <- intersect(He_DS1_logCPM_dataset$gene_symbol, 
+                               Maynard_logCPM_dataset$gene_symbol) %>%
     sort()
   
   # Table of layer-marker annotations
@@ -224,6 +225,7 @@ server <- function(input, output, session) {
     Maynard_logCPM_dataset, He_DS1_logCPM_dataset, Allen_logCPM_dataset
   )
   
+  # Give available values for drop-down bar for single gene
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
                        choices = common_genelist, server = TRUE)
   
@@ -275,7 +277,8 @@ server <- function(input, output, session) {
     output$Barplot <- renderPlot({
       ggplot(
         data = Barplot_data, 
-        aes(x = layer, y = expression, fill = source_dataset, group = source_dataset)) +
+        aes(x = layer, y = expression, fill = source_dataset, 
+            group = source_dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
         ggtitle(paste0('Expression of ', selected_gene_list_single, 
                        ' across the human neocortex')) +
@@ -286,9 +289,10 @@ server <- function(input, output, session) {
         theme_bw() + 
         scale_fill_discrete(
           name="Source Dataset", 
-          breaks=c("He", "Maynard", "ABI_GABAergic", "ABI_Glutamatergic", "ABI_Non-neuronal"),
-          labels=c("He (DLPFC)", "Maynard (DLPFC)", "AIBS: GABA (MTG)", "AIBS: GLUT (MTG)",
-                   "AIBS: Non-neuron (MTG)")) +
+          breaks=c("He", "Maynard", "ABI_GABAergic", "ABI_Glutamatergic", 
+                   "ABI_Non-neuronal"),
+          labels=c("He (DLPFC)", "Maynard (DLPFC)", "AIBS: GABA (MTG)", 
+                   "AIBS: GLUT (MTG)", "AIBS: Non-neuron (MTG)")) +
         scale_x_discrete(name = "\nCortical Layer") +
         theme(axis.text.x = element_text(size = 13), 
               axis.text.y = element_text(size = 13),

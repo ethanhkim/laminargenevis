@@ -1,11 +1,9 @@
-## Scripts for processing strings and/or data ##
+## Scripts for processing strings ##
 
-## Process gene input from app ##
-
-## From Derek Howard, Leon French's tool "Polygenic Layers" 
-
+# Load required libraries
 library(stringr)
 
+## From Derek Howard, Leon French's tool "Polygenic Layers" 
 process_gene_input <- function(input_genes) {
   processed_genes <- unlist(str_split(trimws(input_genes), "[, \n]+") )
   return(processed_genes)
@@ -134,7 +132,7 @@ stats_string <- function(genelist, correlation, p_value, quantile_stat, single_o
   
   if (single_or_multiple == "single") {
     statement <- cat(paste0(
-      "\nBetween the He and Maynard datasets, ",
+      "\nBetween the bulk-tissue datasets, ",
       genelist,
       "'s expression across the layers had a Pearson correlation value of ", 
       correlation,

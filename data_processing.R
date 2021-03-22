@@ -172,13 +172,13 @@ separate_layers <- function(input_table, input_genelist, source) {
 single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
   
   He_gene <- He_dataset %>%
-    select(gene_symbol:WM) %>%
+    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t()
   
   Maynard_gene <- Maynard_dataset %>%
-    select(gene_symbol:WM) %>%
+    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
@@ -194,15 +194,17 @@ single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
 multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
   
   He_genes <- He_dataset %>%
-    select(gene_symbol:WM) %>%
+    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_genes) %>%
+    arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
     filter(across(everything(), ~ !is.na(.))) %>%
     t()
   
   Maynard_genes <- Maynard_dataset %>%
-    select(gene_symbol:WM) %>%
+    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_genes) %>%
+    arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
     filter(across(everything(), ~ !is.na(.))) %>%
     t() 
@@ -234,11 +236,13 @@ wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_d
   
   He_genes <- He_dataset %>%
     filter(gene_symbol %in% input_genelist) %>%
+    arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t()
   
   Maynard_genes <- Maynard_dataset %>%
     filter(gene_symbol %in% input_genelist) %>%
+    arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
   
