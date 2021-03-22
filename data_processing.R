@@ -113,6 +113,10 @@ process_heatmap_data <- function(source, source_dataset, input_genelist,
   #         levels = ordered_data$gene_symbol[data_order], 
   #         ordered = TRUE)
   
+  processed_heatmap_data$layer <- with(processed_heatmap_data, 
+                                       factor(layer, 
+                                       levels = rev(sort(unique(layer)))))
+  
   # Return ordered heatmap data in long format
   return(processed_heatmap_data)
 }

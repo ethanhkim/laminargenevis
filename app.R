@@ -421,10 +421,8 @@ server <- function(input, output, session) {
     # If less than 30 genes input, create heatmaps for bulk tissue
     if (length(selected_gene_list_multiple) <= 30) {
       output$He_figure <- renderPlot({
-        He_heatmap_data %<>% 
-          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
-                                                  "L6", "WM"))) %>%
-          ggplot(data = He_heatmap_data, mapping = aes(x = gene_symbol, y = layer, 
+        He_heatmap_data %>%
+          ggplot(mapping = aes(x = gene_symbol, y = layer, 
                                                      fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
@@ -441,9 +439,7 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
-        Maynard_heatmap_data %<>%
-          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
-                                                  "L6", "WM"))) %>%
+        Maynard_heatmap_data %>%
         ggplot(data = Maynard_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
@@ -587,7 +583,7 @@ server <- function(input, output, session) {
     if (length(selected_gene_list_multiple) <= 30) {
       output$scRNA_heatmap_GABA <- renderPlot({
         ggplot(data = Allen_GABA_heatmap_data, 
-               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
+               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -604,7 +600,7 @@ server <- function(input, output, session) {
       
       output$scRNA_heatmap_GLUT <- renderPlot({
         ggplot(data = Allen_GLUT_heatmap_data, 
-               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
+               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -621,7 +617,7 @@ server <- function(input, output, session) {
       
       output$scRNA_heatmap_NON <- renderPlot({
         ggplot(data = Allen_NONN_heatmap_data, 
-               mapping = aes(x = layer, y = gene_symbol, fill = expression)) +
+               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -647,6 +643,7 @@ server <- function(input, output, session) {
                   there were three cell types identified, the heatmaps represent 
                   the expression of the selected genes on a per-cell type basis."))
       })
+    # Scatterplots
     } else {
       output$scRNA_heatmap_GABA <- renderPlot({
         Allen_GABA_heatmap_data %<>% 
