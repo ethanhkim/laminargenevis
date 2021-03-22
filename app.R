@@ -191,12 +191,12 @@ ui <- fluidPage(
                 p(textOutput("bulk_figure_caption"),style='font-size:15px'),
                 br(),
                 #Output heatmap visualizations for Allen data per cell class type
-                h4(textOutput('scRNA_figure_title')),
+                h4(textOutput('AIBS_figure_title')),
                 br(),
-                plotOutput("scRNA_heatmap_GABA", height = "auto") %>% withSpinner(),
-                plotOutput("scRNA_heatmap_GLUT", height = "auto") %>% withSpinner(),
-                plotOutput("scRNA_heatmap_NON", height = "auto") %>% withSpinner(),
-                p(textOutput("scRNA_figure_caption"),style='font-size:15px'),
+                plotOutput("AIBS_figure_GABA", height = "auto") %>% withSpinner(),
+                plotOutput("AIBS_figure_GLUT", height = "auto") %>% withSpinner(),
+                plotOutput("AIBS_figure_NONN", height = "auto") %>% withSpinner(),
+                p(textOutput("AIBS_figure_caption"),style='font-size:15px'),
                 br(),
                 h4(textOutput('summary_multiple_title')),
                 p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
@@ -237,9 +237,9 @@ server <- function(input, output, session) {
   output$heatmap_caption <- NULL
   output$AUROC_heatmap <- NULL
   output$scRNA_figure_title <- NULL
-  output$scRNA_heatmap_GABA <- NULL
-  output$scRNA_heatmap_GLUT <- NULL
-  output$scRNA_heatmap_NON <- NULL
+  output$AIBS_figure_GABA <- NULL
+  output$AIBS_figure_GLUT <- NULL
+  output$AIBS_figure_NONN <- NULL
   output$summary_multiple_title <- NULL
   
   ## Single gene input ----
@@ -297,18 +297,18 @@ server <- function(input, output, session) {
               legend.title = element_text(size = 12),
               legend.text = element_text(size = 11),
               plot.title = element_text(size=21)) +
-        xlab("\nCortical Layer") + ylab("mRNA expression (log2(CPM))")
+        xlab("\nCortical Layer") + ylab("Gene expression (log(CPM + 1))")
     }) 
     
     # Barplot caption
     output$barplot_caption <- renderPrint({
-      cat(paste("Fig 1. The barplots were created using the data from He et al 
-                and Maynard et al studies, and data from the Allen Institute 
-                for Brain Science. Raw RNA-seq data was normalized through 
-                counts per million (CPM), log-transformed and z-score normalized. 
-                The horizontal dashed lines represent the value of the top (95th) and 
-                bottom (5th) quantile of normalized expression values across all 
-                data."))
+      cat(paste("Fig 1. The barplots were created using data from He et al, 
+                Maynard et al and the Allen Institute for Brain Science (AIBS). 
+                Raw RNA-seq data was processed and normalized through counts 
+                per million (CPM) and log2-transformed. The horizontal dashed 
+                lines represent the value of the top (95th) and bottom (5th) 
+                quantile of normalized expression values across all 
+                normalized data."))
     })
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations
@@ -372,13 +372,13 @@ server <- function(input, output, session) {
     Maynard_heatmap_data <- process_heatmap_data(
       source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
       input_genelist = selected_gene_list_multiple)
-    Allen_GABA_heatmap_data <- process_heatmap_data(
+    AIBS_GABA_heatmap_data <- process_heatmap_data(
       source = "Allen", source_dataset = MTG_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
-    Allen_GLUT_heatmap_data <- process_heatmap_data(
+    AIBS_GLUT_heatmap_data <- process_heatmap_data(
       source = "Allen", source_dataset = MTG_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
-    Allen_NONN_heatmap_data <- process_heatmap_data(
+    AIBS_NONN_heatmap_data <- process_heatmap_data(
       source = "Allen", source_dataset = MTG_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
     
@@ -406,8 +406,8 @@ server <- function(input, output, session) {
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
                                   selected_gene_list_multiple) 
-    AUROC_scRNA_data <- AUROC_scRNA(MTG_logCPM_dataset, selected_gene_list_multiple)
-    AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_scRNA_data)
+    AUROC_AIBS_data <- AUROC_AIBS(MTG_logCPM_dataset, selected_gene_list_multiple)
+    AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_AIBS_data)
     
     # Set dynamic heatmap height
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
@@ -429,7 +429,7 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "He et al data", 
-               fill = "Gene Expression\n(log2(CPM + 1))") +
+               fill = "Gene Expression\n(log(CPM + 1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -447,7 +447,7 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
-               fill = "Gene Expression\n(log2(CPM+1))") +
+               fill = "Gene Expression\n(log(CPM+1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -459,9 +459,9 @@ server <- function(input, output, session) {
       
       # Bulk-tissue expression figure caption
       output$bulk_figure_caption <- renderPrint({
-        cat(paste("Fig 2. The heatmaps were created using the data from He et al and Maynard et al studies. The raw 
-                RNA-seq data was normalized using z-score normalization. The stars (*) indicate if the
-                source paper denoted the gene to be highly enriched within the specific cortical layer."))
+        cat(paste("Fig 2. The heatmaps were created using data from He et al 
+                   Maynard et al. Raw RNA-seq data was processed and normalized 
+                   through counts per million (CPM) and log2-transformed."))
       })
     } else {
       # Scatterplots
@@ -481,7 +481,7 @@ server <- function(input, output, session) {
           ylim(0,16) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Cortical Layer", y = "mRNA expression (log2(CPM+1))", 
+          labs(x = "Cortical Layer", y = "Gene expression (log(CPM+1))", 
                title = "He et al Scatter plot")
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
@@ -501,16 +501,17 @@ server <- function(input, output, session) {
           ylim(0,16) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Cortical Layer", y = "mRNA expression (log2(CPM+1))", 
+          labs(x = "Cortical Layer", y = "Gene expression (log(CPM+1))", 
                title = "Maynard et al Scatter plot")
       }, height = heatmapHeight)
       
       output$bulk_figure_caption <- renderPrint({
-        cat(paste("Fig 2. The dot plots were created using the data from He et al 
-                  and Maynard et al studies. The raw RNA-seq data was normalized 
-                  using z-score normalization. The horizontal bars indicate the 
-                  median of the gene expression values for that layer across all 
-                  genes."))
+        cat(paste("Fig 2. The dot plots were created using data from He et al 
+                   and Maynard et al. Raw RNA-seq data was processed and 
+                   normalized through counts per million (CPM) and 
+                   log2-transformed. The horizontal bars indicate the median of 
+                   the gene expression values for that layer across all 
+                   genes."))
       })
     }
     ### AUC heatmap ----
@@ -546,9 +547,9 @@ server <- function(input, output, session) {
     # AUC heatmap figure caption
     output$AUROC_heatmap_caption <- renderPrint({
       cat(paste("Fig 1. The layers were ranked in each dataset with respect to 
-                the gene expression of the chosen genes, and the AUC score was 
-                calculated per layer. P-values were calcuated using the 
-                Mann-Whitney U test. Stars indicate p-value < 0.05."))
+                 the gene expression of the chosen genes, and the AUC score was 
+                 calculated per layer. P-values were calcuated using the 
+                 Mann-Whitney U test. Stars indicate p-value < 0.05."))
     })
     # Summary textbox ----
     
@@ -575,20 +576,20 @@ server <- function(input, output, session) {
     # snRNA Heatmaps ----
     
     # snRNA heatmap title
-    output$scRNA_figure_title <- renderPrint({
+    output$AIBS_figure_title <- renderPrint({
       cat(paste('Cell type-specific Expression Heatmap'))
     })
     
     # Heatmap for snRNA data 
     if (length(selected_gene_list_multiple) <= 30) {
-      output$scRNA_heatmap_GABA <- renderPlot({
-        ggplot(data = Allen_GABA_heatmap_data, 
+      output$AIBS_figure_GABA <- renderPlot({
+        ggplot(data = AIBS_GABA_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
-               fill = "Mean Expression\n(normalized)") +
+               fill = "Gene Expression\n(log(CPM + 1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -598,14 +599,14 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
-      output$scRNA_heatmap_GLUT <- renderPlot({
-        ggplot(data = Allen_GLUT_heatmap_data, 
+      output$AIBS_figure_GLUT <- renderPlot({
+        ggplot(data = AIBS_GLUT_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
-               fill = "Mean Expression\n(normalized)") +
+               fill = "Gene Expression\n(log(CPM + 1))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -615,14 +616,14 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
-      output$scRNA_heatmap_NON <- renderPlot({
-        ggplot(data = Allen_NONN_heatmap_data, 
+      output$AIBS_figure_NONN <- renderPlot({
+        ggplot(data = AIBS_NONN_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
-               fill = "Mean Expression\n(normalized)") +
+               fill = "Gene Expression\n(log(CPM + 1)))") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -632,22 +633,21 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
-      #scRNA heatmap caption
-      output$scRNA_figure_caption <- renderPrint({
-        cat(paste("Fig 3. The heatmaps were created using the scRNA-seq data from 
-                  the Allen Institute of Brain Science which was taken from live 
-                  tissue, specifically from the middle temporal gyrus (MTG). The 
-                  data was first log(x+1) normalized on a per-gene basis and the 
-                  mean of all samples were taken on a per-gene and layer basis. 
-                  The mean was then transformed using z-score normalization. As 
-                  there were three cell types identified, the heatmaps represent 
-                  the expression of the selected genes on a per-cell type basis."))
+      #AIBS heatmap caption
+      output$AIBS_figure_caption <- renderPrint({
+        cat(paste("Fig 3. Heatmaps were created using the snRNA-seq data from 
+                   the Allen Institute of Brain Science (AIBS), specifically 
+                   from the middle temporal gyrus (MTG). The raw RNA-seq data 
+                   was pseudo-bulked at the layer level and normalized on using 
+                   counts per million (CPM) and log2-transformed. The heatmaps 
+                   represent the expression of the selected genes on a per-cell 
+                   type basis, using the labels provided by AIBS."))
       })
     # Scatterplots
     } else {
-      output$scRNA_heatmap_GABA <- renderPlot({
-        Allen_GABA_heatmap_data %<>% 
-          inner_join(Allen_GABA_heatmap_data %>% group_by(layer) %>% 
+      output$AIBS_figure_GABA <- renderPlot({
+        AIBS_GABA_heatmap_data %<>% 
+          inner_join(AIBS_GABA_heatmap_data %>% group_by(layer) %>% 
                        summarize(median_rank = median(expression)), 
                                    by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
@@ -662,8 +662,8 @@ server <- function(input, output, session) {
           labs(x = "Layer", y = "Expression", title = "GABAergic Expression")
       }, height = heatmapHeight)
       
-      output$scRNA_heatmap_GLUT <- renderPlot({
-        Allen_GLUT_heatmap_data %<>% inner_join(Allen_GLUT_heatmap_data %>% group_by(layer) %>% 
+      output$AIBS_figure_GLUT <- renderPlot({
+        AIBS_GLUT_heatmap_data %<>% inner_join(AIBS_GLUT_heatmap_data %>% group_by(layer) %>% 
                                      summarize(median_rank = median(expression)), 
                                    by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5",
@@ -678,8 +678,8 @@ server <- function(input, output, session) {
           labs(x = "Layer", y = "Expression", title = "Glutamatergic Expression")
       }, height = heatmapHeight)
       
-      output$scRNA_heatmap_NON <- renderPlot({
-        Allen_NONN_heatmap_data %<>% inner_join(Allen_NONN_heatmap_data 
+      output$AIBS_figure_NONN <- renderPlot({
+        AIBS_NONN_heatmap_data %<>% inner_join(AIBS_NONN_heatmap_data 
                                                 %>% group_by(layer) %>% 
                                     summarize(median_rank = median(expression)), 
                                   by = "layer") %>%
@@ -694,7 +694,7 @@ server <- function(input, output, session) {
           labs(x = "Layer", y = "Expression", title = "Non-neuronal Expression")
       }, height = heatmapHeight)
       
-      output$scRNA_figure_caption <- renderPrint({
+      output$AIBS_figure_caption <- renderPrint({
         cat(paste("Fig 3. The dot plots were created using the scRNA-seq data 
                   from the Allen Institute of Brain Science which was created from 
                   live tissue, specifically from the middle temporal gyrus (MTG). 

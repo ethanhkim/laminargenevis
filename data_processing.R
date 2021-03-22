@@ -257,13 +257,13 @@ wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_d
 rank_bulk_dataset <- function(source_dataset) {
   dataset_ranked <- source_dataset %>%
     select(L1:WM) %>%
-    map_df(rank)
+    map_df(rank, ties.method = "min")
   dataset_ranked$gene_symbol <- source_dataset$gene_symbol
   return(dataset_ranked)
 }
 
 #Function for ranking scRNA datasets
-rank_dataset_scRNA <- function(source_dataset) {
+rank_AIBS_dataset <- function(source_dataset) {
   dataset_ranked <- source_dataset 
   gene_symbol <- dataset_ranked$gene_symbol
   dataset_ranked %<>% select(L1:L6) %>% map_df(rank, ties.method = "min") %>%
@@ -305,7 +305,7 @@ apply_MWU <- function(column, targetIndices) {
 auroc_cell_type <- function(dataset, multiple_genelist, cell_type) {
   cell_type_df <- dataset %>%
     filter(class_label == cell_type)
-  ranked_cell_type_df <- rank_dataset_scRNA(cell_type_df)
+  ranked_cell_type_df <- rank_AIBS_dataset(cell_type_df)
   indices <- return_indices(ranked_cell_type_df, multiple_genelist)
   ranked_cell_type_df %<>% select(-gene_symbol, -class_label)
   AUROC_cell_type <- map_df(ranked_cell_type_df, auroc_analytic, indices)
@@ -346,6 +346,7 @@ AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
            pValue_Maynard = signif(pValue_Maynard, digits = 3),
            AUROC_He = signif(AUROC_He, digits = 3),
            AUROC_Maynard = signif(AUROC_Maynard, digits = 3),
+           # Multiple test correction using bonferroni
            adjusted_P_He = signif(p.adjust(pValue_He, method = "bonferroni"), digits = 3),
            adjusted_P_Maynard = signif(p.adjust(pValue_Maynard, method = "bonferroni"), digits = 3)) %>%
     select(Layers, AUROC_He, pValue_He, adjusted_P_He, AUROC_Maynard, pValue_Maynard, adjusted_P_Maynard) %>%
@@ -375,19 +376,21 @@ AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
 }
 
 ## Function for generating scRNA AUROC and p-value data
-AUROC_scRNA <- function(source_dataset, multiple_genelist) {
+AUROC_AIBS <- function(source_dataset, multiple_genelist) {
   scRNA_AUROC_list <- list()
   for (i in unique(source_dataset$class_label)) {
     scRNA_AUROC_list[[i]] <- auroc_cell_type(source_dataset, multiple_genelist, i)
   }
   scRNA_AUROC_table <- rbindlist(scRNA_AUROC_list, idcol = "rownames") %>%
-    mutate(rownames = c("AUROC_GABA", "pValue_GABA", "AUROC_GLUT", "pValue_GLUT", "AUROC_NON", "pValue_NON")) %>%
+    mutate(rownames = c("AUROC_GABA", "pValue_GABA", "AUROC_GLUT", 
+                        "pValue_GLUT", "AUROC_NON", "pValue_NON")) %>%
     column_to_rownames(var = "rownames") %>% 
     add_column(WM = NA) %>%
     t() %>%
     as.data.frame() %>%
     rownames_to_column(var = "Layer")
-  scRNA_pValue_table <- scRNA_AUROC_table %>% select(starts_with("pValue"), Layer) %>%
+  scRNA_pValue_table <- scRNA_AUROC_table %>% 
+    select(starts_with("pValue"), Layer) %>%
     pivot_longer(cols = starts_with("pValue"),
                  names_to = c("p_Value"),
                  values_to = "pValue") %>%
@@ -407,8 +410,8 @@ AUROC_scRNA <- function(source_dataset, multiple_genelist) {
 }
 
 ## Function for binding scRNA and bulk tissue AUROC data to view as heatmap
-AUROC_data <- function(scRNA_AUROC_table, bulk_AUROC_table) {
-  AUROC_table <- rbind(scRNA_AUROC_table, bulk_AUROC_table) %>%
+AUROC_data <- function(AIBS_AUROC_table, bulk_AUROC_table) {
+  AUROC_table <- rbind(AIBS_AUROC_table, bulk_AUROC_table) %>%
     rename(dataset = class_label) %>%
     mutate(dataset = gsub("GABA", "scRNA_GABA", dataset)) %>%
     mutate(dataset = gsub("GLUT", "scRNA_GLUT", dataset)) %>%
@@ -416,7 +419,8 @@ AUROC_data <- function(scRNA_AUROC_table, bulk_AUROC_table) {
     mutate(dataset = gsub("AUROC ", "", dataset)) %>%
     mutate(dataset = gsub("\\(", "", dataset)) %>%
     mutate(dataset = gsub("\\)", "", dataset))
-  AUROC_table$Layer <- factor(AUROC_table$Layer, levels = c("WM", "L6", "L5", "L4", "L3", "L2", "L1"))
+  AUROC_table$Layer <- factor(AUROC_table$Layer, 
+                              levels = c("WM", "L6", "L5", "L4", "L3", "L2", "L1"))
   return(AUROC_table)
 }
 
