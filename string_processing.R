@@ -50,78 +50,78 @@ layer_marker_preempt_string <- function(source_df, single_or_multiple, genelist)
 layer_marker_string <- function(layer_marker_list, single_or_multiple) {
   
   if (single_or_multiple == "single") {
-    if (length(unlist(layer_marker_list$Layer_1)) == 0 &
-        length(unlist(layer_marker_list$Layer_2)) == 0 &
-        length(unlist(layer_marker_list$Layer_3)) == 0 &
-        length(unlist(layer_marker_list$Layer_4)) == 0 & 
-        length(unlist(layer_marker_list$Layer_5)) == 0 &
-        length(unlist(layer_marker_list$Layer_6)) == 0 &
+    if (length(unlist(layer_marker_list$L1)) == 0 &
+        length(unlist(layer_marker_list$L2)) == 0 &
+        length(unlist(layer_marker_list$L3)) == 0 &
+        length(unlist(layer_marker_list$L4)) == 0 & 
+        length(unlist(layer_marker_list$L5)) == 0 &
+        length(unlist(layer_marker_list$L6)) == 0 &
         length(unlist(layer_marker_list$WM)) == 0) {
       statement <- "not mark any layer."
     } else {
       statement <- cat(paste0(
         "mark layer ",
-        if (length(unlist(layer_marker_list$Layer_1)) == 0) {
+        if (length(unlist(layer_marker_list$L1)) == 0) {
           ""
         } else "1.",
-        if (length(unlist(layer_marker_list$Layer_2)) == 0) {
+        if (length(unlist(layer_marker_list$L2)) == 0) {
           ""
         } else "2.",
-        if (length(unlist(layer_marker_list$Layer_3)) == 0) {
+        if (length(unlist(layer_marker_list$L3)) == 0) {
           ""
         } else "3.",
-        if (length(unlist(layer_marker_list$Layer_4)) == 0) {
+        if (length(unlist(layer_marker_list$L4)) == 0) {
           ""
         } else "4.",
-        if (length(unlist(layer_marker_list$Layer_5)) == 0) {
+        if (length(unlist(layer_marker_list$L5)) == 0) {
           ""
         } else "5.",
-        if (length(unlist(layer_marker_list$Layer_6)) == 0) {
+        if (length(unlist(layer_marker_list$L6)) == 0) {
           ""
         } else "6."
       ))
     }
   } else {
-    if (length(unlist(layer_marker_list$Layer_1)) == 0 &
-        length(unlist(layer_marker_list$Layer_2)) == 0 &
-        length(unlist(layer_marker_list$Layer_3)) == 0 &
-        length(unlist(layer_marker_list$Layer_4)) == 0 & 
-        length(unlist(layer_marker_list$Layer_5)) == 0 &
-        length(unlist(layer_marker_list$Layer_6)) == 0 &
+    if (length(unlist(layer_marker_list$L1)) == 0 &
+        length(unlist(layer_marker_list$L2)) == 0 &
+        length(unlist(layer_marker_list$L3)) == 0 &
+        length(unlist(layer_marker_list$L4)) == 0 & 
+        length(unlist(layer_marker_list$L5)) == 0 &
+        length(unlist(layer_marker_list$L6)) == 0 &
         length(unlist(layer_marker_list$WM)) == 0) {
       statement <- "There were no genes that marked any layer."
     } else {
       statement <- cat(paste0( 
-        if (length(unlist(layer_marker_list$Layer_1)) == 0) {
+        if (length(unlist(layer_marker_list$L1)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list$Layer_1)),
+        } else paste0("- ",length(unlist(layer_marker_list$L1)),
                       " gene(s) marked layer 1 (", 
-                      paste(layer_marker_list$Layer_1, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $Layer_2)) == 0) {
+                      paste(layer_marker_list$L1, collapse = ", "), ")\n"),
+        if (length(unlist(layer_marker_list $L2)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list$Layer_2)), 
+        } else paste0("- ",length(unlist(layer_marker_list$L2)), 
                       " gene(s) marked layer 2 (", 
-                      paste(layer_marker_list $Layer_2, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $Layer_3)) == 0) {
+                      paste(layer_marker_list $L2, collapse = ", "), ")\n"),
+        if (length(unlist(layer_marker_list $L3)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $Layer_3)), 
+        } else paste0("- ",length(unlist(layer_marker_list $L3)), 
                       " gene(s) marked layer 3 (",
-                      paste(layer_marker_list $Layer_3, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $Layer_4)) == 0) {
+                      paste(layer_marker_list $L3, collapse = ", "), ")\n"),
+        if (length(unlist(layer_marker_list $L4)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $Layer_4)), 
+        } else paste0("- ",length(unlist(layer_marker_list $L4)), 
                       " gene(s) marked layer 4 (",
-                      paste(layer_marker_list $Layer_4, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $Layer_5)) == 0) {
+                      paste(layer_marker_list $L4, collapse = ", "), ")\n"),
+        if (length(unlist(layer_marker_list $L5)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $Layer_5)), 
+        } else paste0("- ",length(unlist(layer_marker_list $L5)), 
                       " gene(s) marked layer 5 (",
-                      paste(layer_marker_list $Layer_5, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $Layer_6)) == 0) {
+                      paste(layer_marker_list $L5, collapse = ", "), ")\n"),
+        if (length(unlist(layer_marker_list $L6)) == 0) {
           ""
-        } else paste0("- ", length(unlist(layer_marker_list $Layer_6)), 
+        } else paste0("- ", length(unlist(layer_marker_list $L6)), 
                       " gene(s) marked layer 6 (",
-                      paste(layer_marker_list $Layer_6, collapse = ", "), ").\n")
+                      paste(layer_marker_list $L6, collapse = ", "), ").\n")
       ))
     }
   }

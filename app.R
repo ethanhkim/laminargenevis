@@ -218,7 +218,11 @@ server <- function(input, output, session) {
     sort()
   
   # Table of layer-marker annotations
-  layer_marker_df <- layer_marker_table
+  layer_marker_lookup_tbl <- layer_marker_table %>%
+    pivot_longer(
+      cols=c("He", "Maynard"), 
+      names_to = "source_dataset",
+      values_to = "layer_marker")
   
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
@@ -258,18 +262,13 @@ server <- function(input, output, session) {
       Maynard_dataset = Maynard_logCPM_dataset,
       Allen_dataset = Allen_logCPM_dataset)
     
-    layer_marker_table_long <- layer_marker_df %>%
-      pivot_longer(
-        cols=c("He", "Maynard"), names_to = "source_dataset",
-        values_to = "layer_marker")
-    
     # Layer marker for input gene
     He_layer_marker <- separate_layers(
-      input_table = layer_marker_table_long, 
+      input_table = layer_marker_lookup_tbl, 
       input_genelist = selected_gene_list_single,
       source = "He")
     Maynard_layer_marker <- separate_layers(
-      input_table = layer_marker_table_long,
+      input_table = layer_marker_lookup_tbl,
       input_genelist = selected_gene_list_single,
       source = "Maynard")
     
@@ -385,17 +384,11 @@ server <- function(input, output, session) {
     AIBS_NONN_heatmap_data <- process_heatmap_data(
       source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
-    
-    # Filter the layer marker table for the genes inputted
-    layer_marker_table_long <- layer_marker_df %>%
-      pivot_longer(cols=c("He", "Maynard"),
-                   names_to = "source_dataset",
-                   values_to = "layer_marker")
-    
-    He_layer_marker <- separate_layers(layer_marker_table_long, 
+
+    He_layer_marker <- separate_layers(layer_marker_lookup_tbl, 
                                        selected_gene_list_multiple,
                                        "He")
-    Maynard_layer_marker <- separate_layers(layer_marker_table_long, 
+    Maynard_layer_marker <- separate_layers(layer_marker_lookup_tbl, 
                                             selected_gene_list_multiple,
                                             "Maynard")
     
