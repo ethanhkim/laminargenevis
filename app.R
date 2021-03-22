@@ -27,8 +27,8 @@ source("data_processing.R")
 # Load in data #
 load(here("data", "processed", "He_DS1_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Allen_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_gene_correlation.Rdata"), verbose = TRUE)
-load(here("data", "processed", "MTG_logCPM_dataset.Rdata"))
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
 
@@ -221,7 +221,7 @@ server <- function(input, output, session) {
   
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_logCPM_dataset, He_DS1_logCPM_dataset, MTG_logCPM_dataset
+    Maynard_logCPM_dataset, He_DS1_logCPM_dataset, Allen_logCPM_dataset
   )
   
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
@@ -254,7 +254,7 @@ server <- function(input, output, session) {
       input_genelist = selected_gene_list_single,
       He_dataset = He_DS1_logCPM_dataset, 
       Maynard_dataset = Maynard_logCPM_dataset,
-      Allen_dataset = MTG_logCPM_dataset)
+      Allen_dataset = Allen_logCPM_dataset)
     
     layer_marker_table_long <- layer_marker_df %>%
       pivot_longer(
@@ -373,13 +373,13 @@ server <- function(input, output, session) {
       source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
       input_genelist = selected_gene_list_multiple)
     AIBS_GABA_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
     AIBS_GLUT_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
     AIBS_NONN_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = MTG_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
     
     # Filter the layer marker table for the genes inputted
@@ -406,7 +406,7 @@ server <- function(input, output, session) {
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
                                   selected_gene_list_multiple) 
-    AUROC_AIBS_data <- AUROC_AIBS(MTG_logCPM_dataset, selected_gene_list_multiple)
+    AUROC_AIBS_data <- AUROC_AIBS(Allen_logCPM_dataset, selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_AIBS_data)
     
     # Set dynamic heatmap height
