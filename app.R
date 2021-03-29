@@ -28,6 +28,9 @@ source("data_processing.R")
 load(here("data", "processed", "He_DS1_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Allen_logCPM_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "He_DS1_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Maynard_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Allen_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_gene_correlation.Rdata"), verbose = TRUE)
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
@@ -370,19 +373,19 @@ server <- function(input, output, session) {
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     # Process data with input genes
     He_heatmap_data <- process_heatmap_data(
-      source = "He", source_dataset = He_DS1_logCPM_dataset, 
+      source = "He", source_dataset = He_DS1_logCPM_filtered_dataset, 
       input_genelist = selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_data(
-      source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
+      source = "Maynard", source_dataset = Maynard_logCPM_filtered_dataset, 
       input_genelist = selected_gene_list_multiple)
     AIBS_GABA_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
     AIBS_GLUT_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
     AIBS_NONN_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
 
     He_layer_marker <- separate_layers(layer_marker_lookup_tbl, 
@@ -401,9 +404,11 @@ server <- function(input, output, session) {
                                         He_Maynard_gene_correlation)
     
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
-    AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
+    AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_filtered_dataset, 
+                                  Maynard_logCPM_filtered_dataset, 
                                   selected_gene_list_multiple) 
-    AUROC_AIBS_data <- AUROC_AIBS(Allen_logCPM_dataset, selected_gene_list_multiple)
+    AUROC_AIBS_data <- AUROC_AIBS(Allen_logCPM_filtered_dataset, 
+                                  selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_AIBS_data)
     
     # Set dynamic heatmap height
@@ -422,11 +427,11 @@ server <- function(input, output, session) {
           ggplot(mapping = aes(x = gene_symbol, y = layer, 
                                                      fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "He et al data", 
-               fill = "Gene Expression\n(log(CPM + 1))") +
+               fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -440,11 +445,11 @@ server <- function(input, output, session) {
         ggplot(data = Maynard_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
-               fill = "Gene Expression\n(log(CPM+1))") +
+               fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -543,10 +548,11 @@ server <- function(input, output, session) {
     
     # AUC heatmap figure caption
     output$AUROC_heatmap_caption <- renderPrint({
-      cat(paste("Fig 1. The layers were ranked in each dataset with respect to 
-                 the gene expression of the chosen genes, and the AUC score was 
-                 calculated per layer. P-values were calcuated using the 
-                 Mann-Whitney U test. Stars indicate p-value < 0.05."))
+      cat(paste("Fig 1. Genes with CPM > 0.1 were chose, and the layers were 
+                 ranked in each dataset with respect to the gene expression of 
+                 the chosen genes. The AUC score was calculated per layer using
+                 the rankings in each respective dataset. P-values were calcuated 
+                 using the Mann-Whitney U test; stars (*) indicate < 0.05."))
     })
     # Summary textbox ----
     
@@ -570,9 +576,9 @@ server <- function(input, output, session) {
       ))
     })
     
-    # snRNA Heatmaps ----
+    # AIBS Figures ----
     
-    # snRNA heatmap title
+    # AIBS figure title
     output$AIBS_figure_title <- renderPrint({
       cat(paste('Cell type-specific Expression Heatmap'))
     })
@@ -583,10 +589,10 @@ server <- function(input, output, session) {
         ggplot(data = AIBS_GABA_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
-               fill = "Gene Expression\n(log(CPM + 1))") +
+               fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -600,10 +606,10 @@ server <- function(input, output, session) {
         ggplot(data = AIBS_GLUT_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
-               fill = "Gene Expression\n(log(CPM + 1))") +
+               fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
@@ -617,10 +623,10 @@ server <- function(input, output, session) {
         ggplot(data = AIBS_NONN_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(0, 16)) +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
-               fill = "Gene Expression\n(log(CPM + 1)))") +
+               fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
