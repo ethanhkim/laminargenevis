@@ -78,7 +78,10 @@ layer_marker_string <- function(layer_marker_list, single_or_multiple) {
         } else "5.",
         if (length(unlist(layer_marker_list$L6)) == 0) {
           ""
-        } else "6."
+        } else "6.",
+        if (length(unlist(layer_marker_list$WM)) == 0) {
+          ""
+        } else "white matter."
       ))
     }
   } else {
@@ -97,31 +100,36 @@ layer_marker_string <- function(layer_marker_list, single_or_multiple) {
         } else paste0("- ",length(unlist(layer_marker_list$L1)),
                       " gene(s) marked layer 1 (", 
                       paste(layer_marker_list$L1, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $L2)) == 0) {
+        if (length(unlist(layer_marker_list$L2)) == 0) {
           ""
         } else paste0("- ",length(unlist(layer_marker_list$L2)), 
                       " gene(s) marked layer 2 (", 
                       paste(layer_marker_list $L2, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $L3)) == 0) {
+        if (length(unlist(layer_marker_list$L3)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $L3)), 
+        } else paste0("- ",length(unlist(layer_marker_list$L3)), 
                       " gene(s) marked layer 3 (",
                       paste(layer_marker_list $L3, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $L4)) == 0) {
+        if (length(unlist(layer_marker_list$L4)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $L4)), 
+        } else paste0("- ",length(unlist(layer_marker_list$L4)), 
                       " gene(s) marked layer 4 (",
                       paste(layer_marker_list $L4, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $L5)) == 0) {
+        if (length(unlist(layer_marker_list$L5)) == 0) {
           ""
-        } else paste0("- ",length(unlist(layer_marker_list $L5)), 
+        } else paste0("- ",length(unlist(layer_marker_list$L5)), 
                       " gene(s) marked layer 5 (",
                       paste(layer_marker_list $L5, collapse = ", "), ")\n"),
-        if (length(unlist(layer_marker_list $L6)) == 0) {
+        if (length(unlist(layer_marker_list$L6)) == 0) {
           ""
-        } else paste0("- ", length(unlist(layer_marker_list $L6)), 
+        } else paste0("- ", length(unlist(layer_marker_list$L6)), 
                       " gene(s) marked layer 6 (",
-                      paste(layer_marker_list $L6, collapse = ", "), ").\n")
+                      paste(layer_marker_list $L6, collapse = ", "), ").\n"),
+        if (length(unlist(layer_marker_list$WM)) == 0) {
+          ""
+        } else paste0("- ", length(unlist(layer_marker_list$WM)), 
+                      " gene(s) marked layer 6 (",
+                      paste(layer_marker_list$WM, collapse = ", "), ").\n")
       ))
     }
   }

@@ -66,10 +66,10 @@ ui <- fluidPage(
             inputId = "selector",
             label =  "Choose to examine either a single gene, 
             or multiple genes: \n", 
-            choices = c("Single", "Multiple")),
+            choices = c("Single Gene", "Multiple Genes")),
           # Single input side-panel  ----
           conditionalPanel(
-            condition = "input.selector == 'Single'",
+            condition = "input.selector == 'Single Gene'",
             # Drop-down bar
             selectizeInput(
               inputId = "genelist", label = "Input gene:", 
@@ -79,7 +79,7 @@ ui <- fluidPage(
             actionButton(inputId = "submit_barplot", label = "Submit")),
           # Multiple input side-panel ----
           conditionalPanel(
-            condition = "input.selector == 'Multiple'",
+            condition = "input.selector == 'Multiple Genes'",
             # Text box
             textAreaInput(
               inputId = "multiple_genelist", 
@@ -106,8 +106,8 @@ ui <- fluidPage(
                p("Here's a quick overview of the app! Multiple datasets of 
                   RNA-seq expression (described below) have been standardized 
                   for ease of comparison as shown in (A). Users have the option 
-                  of choosing to examine either", strong("Single"), "or", 
-                  strong("Multiple"),"gene(s) in the HGNC gene symbol 
+                  of choosing to examine either", strong("Single Gene"), "or", 
+                  strong("Multiple Genes")," in the HGNC gene symbol 
                   format. Choosing Single Gene will give you a plot similar 
                   to (B), and choosing Multiple Genes will give you multiple 
                   plots, including the plot shown in (C).", 
@@ -163,22 +163,22 @@ ui <- fluidPage(
               conditionalPanel(
                 h3("Layer-specific gene expression"),
                 #Only show when the input selector is Single
-                condition = "input.selector == 'Single'",
+                condition = "input.selector == 'Single Gene'",
                 #Output barplot visualization
                 br(),
                 plotOutput("Barplot") %>% withSpinner(),
                 br(),
                 br(),
-                h5(textOutput("barplot_caption")),
+                p(textOutput("barplot_caption"),style='font-size:15px'),
                 br(),
                 br(),
-                p(verbatimTextOutput('summary_single')),
+                p(verbatimTextOutput('summary_single'),style='font-size:15px'),
               ),
               ### Multiple gene visualization ----
               conditionalPanel(
-                h3("Layer-specific Heatmaps"),
+                h3("Layer-specific Figures"),
                 #Only show when the input selector is Multiple
-                condition = "input.selector == 'Multiple'",
+                condition = "input.selector == 'Multiple Genes'",
                 br(),
                 # Show AUC heatmap
                 h4(textOutput('AUROC_heatmap_title')),
@@ -229,7 +229,9 @@ server <- function(input, output, session) {
   
   # Calculate top and bottom 5 percentile for values
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_logCPM_dataset, He_DS1_logCPM_dataset, Allen_logCPM_dataset
+    Maynard_logCPM_dataset, 
+    He_DS1_logCPM_dataset, 
+    Allen_logCPM_dataset
   )
   
   # Give available values for drop-down bar for single gene
@@ -275,7 +277,7 @@ server <- function(input, output, session) {
       input_genelist = selected_gene_list_single,
       source = "Maynard")
     
-    # Barplot
+    # Single gene barplot ----
     output$Barplot <- renderPlot({
       ggplot(
         data = Barplot_data, 
@@ -303,7 +305,7 @@ server <- function(input, output, session) {
               legend.title = element_text(size = 12),
               legend.text = element_text(size = 11),
               plot.title = element_text(size=21)) +
-        xlab("\nCortical Layer") + ylab("Gene expression (log(CPM + 1))")
+        xlab("\nCortical Layer") + ylab("Expression (log(CPM))")
     }) 
     
     # Barplot caption
@@ -413,109 +415,7 @@ server <- function(input, output, session) {
     
     # Set dynamic heatmap height
     heatmapHeight <- heatmap_height(selected_gene_list_multiple)
-    ### Heatmaps ----
     
-    # Bulk-tissue expression figure title
-    output$bulk_figure_title <- renderPrint({
-      cat(paste('Bulk-tissue Gene Expression Heatmap'))
-    })
-    
-    # If less than 30 genes input, create heatmaps for bulk tissue
-    if (length(selected_gene_list_multiple) <= 30) {
-      output$He_figure <- renderPlot({
-        He_heatmap_data %>%
-          ggplot(mapping = aes(x = gene_symbol, y = layer, 
-                                                     fill = expression)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
-          scale_y_discrete(expand=c(0,0)) + 
-          scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer", title = "He et al data", 
-               fill = "Z-Score\nNormalized\nExpression") +
-          theme(axis.text.x = element_text(size = 13), 
-                axis.text.y = element_text(size = 13),
-                axis.title.x = element_text(size = 17),
-                axis.title.y = element_text(size = 17),
-                legend.title = element_text(size = 12),
-                legend.text = element_text(size = 11),
-                plot.title = element_text(size=17))
-      }, height = heatmapHeight)
-      output$Maynard_figure <- renderPlot({
-        Maynard_heatmap_data %>%
-        ggplot(data = Maynard_heatmap_data, 
-               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
-          geom_tile() +
-          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
-          scale_y_discrete(expand=c(0,0)) + 
-          scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
-               fill = "Z-Score\nNormalized\nExpression") +
-          theme(axis.text.x = element_text(size = 13), 
-                axis.text.y = element_text(size = 13),
-                axis.title.x = element_text(size = 17),
-                axis.title.y = element_text(size = 17),
-                legend.title = element_text(size = 12),
-                legend.text = element_text(size = 11),
-                plot.title = element_text(size=17))
-      }, height = heatmapHeight)
-      
-      # Bulk-tissue expression figure caption
-      output$bulk_figure_caption <- renderPrint({
-        cat(paste("Fig 2. The heatmaps were created using data from He et al 
-                   Maynard et al. Raw RNA-seq data was processed and normalized 
-                   through counts per million (CPM) and log2-transformed."))
-      })
-    } else {
-      # Scatterplots
-      output$He_figure <- renderPlot({
-        He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
-                                          summarize(median_rank = median(expression)), 
-                                        by = "layer") %>%
-          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
-                                                  "L6", "WM"))) %>%
-          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
-                     fill = layer)) +
-          # Median line
-          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
-                        colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) +
-          # Limit set to min and max expression value across all datasets
-          ylim(0,16) +
-          guides(fill = "none") +
-          theme_bw() +
-          labs(x = "Cortical Layer", y = "Gene expression (log(CPM+1))", 
-               title = "He et al Scatter plot")
-      }, height = heatmapHeight)
-      output$Maynard_figure <- renderPlot({
-        Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
-                                               group_by(layer) %>% 
-                                               summarize(median_rank = median(expression)), 
-                                             by = "layer") %>%
-          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
-                                                  "L6", "WM"))) %>%
-          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
-                     fill = layer)) +
-          # Median line
-          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
-                        colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) +
-          # Limit set to min and max expression value across all datasets
-          ylim(0,16) +
-          guides(fill = "none") +
-          theme_bw() +
-          labs(x = "Cortical Layer", y = "Gene expression (log(CPM+1))", 
-               title = "Maynard et al Scatter plot")
-      }, height = heatmapHeight)
-      
-      output$bulk_figure_caption <- renderPrint({
-        cat(paste("Fig 2. The dot plots were created using data from He et al 
-                   and Maynard et al. Raw RNA-seq data was processed and 
-                   normalized through counts per million (CPM) and 
-                   log2-transformed. The horizontal bars indicate the median of 
-                   the gene expression values for that layer across all 
-                   genes."))
-      })
-    }
     ### AUC heatmap ----
     # Heatmap figure title
     output$AUROC_heatmap_title <- renderPrint({
@@ -548,43 +448,152 @@ server <- function(input, output, session) {
     
     # AUC heatmap figure caption
     output$AUROC_heatmap_caption <- renderPrint({
-      cat(paste("Fig 1. Genes with CPM > 0.1 were chose, and the layers were 
-                 ranked in each dataset with respect to the gene expression of 
-                 the chosen genes. The AUC score was calculated per layer using
-                 the rankings in each respective dataset. P-values were calcuated 
-                 using the Mann-Whitney U test; stars (*) indicate < 0.05."))
-    })
-    # Summary textbox ----
-    
-    # Summary textbox title
-    output$summary_multiple_title <- renderPrint({
-      cat(paste('Summary Textbox'))
+      cat(paste("Fig 1. Each dataset was filtered for genes with CPM > 0.1 
+                 across all layers prior to log2 and z-score normalization. 
+                 Layers were ranked in each dataset with respect to the gene 
+                 expression of the chosen genes. The AUC score was calculated per 
+                 layer using the rankings in each respective dataset. P-values 
+                 were calcuated using the Mann-Whitney U test and adjusted for
+                 multiple test correction through Bonferroni correction; stars (*) 
+                 indicate p < 0.05."))
     })
     
-    # Summary textbox
-    output$summary_multiple <- renderPrint({
-      cat(paste0(
-        assayed_gene_string(selected_gene_list_multiple, He_DS1_logCPM_dataset,
-                            Maynard_logCPM_dataset, "multiple"),
-        #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
-        stats_string(selected_gene_list_multiple, multi_gene_cor, 
-                     p_value_multiple_gene, multi_gene_quantile, "multiple"),
-        layer_marker_preempt_string("He", "multiple", selected_gene_list_multiple),
-        paste0(layer_marker_string(He_layer_marker, "multiple")),
-        layer_marker_preempt_string("Maynard", "multiple", selected_gene_list_multiple),
-        paste0(layer_marker_string(Maynard_layer_marker, "multiple"))
-      ))
-    })
-    
-    # AIBS Figures ----
-    
-    # AIBS figure title
-    output$AIBS_figure_title <- renderPrint({
-      cat(paste('Cell type-specific Expression Heatmap'))
-    })
-    
-    # Heatmap for snRNA data 
+    # If less than 30 genes input, create heatmaps for bulk tissue
     if (length(selected_gene_list_multiple) <= 30) {
+      
+      # Bulk-tissue expression figure title
+      output$bulk_figure_title <- renderPrint({
+        cat(paste('Bulk-tissue Gene Expression Heatmaps'))
+      })
+      
+      # Bulk tissue heatmaps ----
+      output$He_figure <- renderPlot({
+        He_heatmap_data %>%
+          ggplot(mapping = aes(x = gene_symbol, y = layer, 
+                                                     fill = expression)) +
+          geom_tile() +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
+          scale_y_discrete(expand=c(0,0)) + 
+          scale_x_discrete(expand=c(0,0)) +
+          labs(y = "", x = "\nCortical Layer", title = "He et al data", 
+               fill = "Z-Score\nNormalized\nExpression") +
+          theme(axis.text.x = element_text(size = 13, angle = 25, hjust = 0.95), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
+      }, height = heatmapHeight)
+      output$Maynard_figure <- renderPlot({
+        Maynard_heatmap_data %>%
+        ggplot(data = Maynard_heatmap_data, 
+               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
+          geom_tile() +
+          scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
+          scale_y_discrete(expand=c(0,0)) + 
+          scale_x_discrete(expand=c(0,0)) +
+          labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
+               fill = "Z-Score\nNormalized\nExpression") +
+          theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
+      }, height = heatmapHeight)
+      
+      # Bulk-tissue expression figure caption
+      output$bulk_figure_caption <- renderPrint({
+        cat(paste("Fig 2. The heatmaps were created using data from He et al 
+                   Maynard et al. Raw RNA-seq data was processed and normalized 
+                   through counts per million (CPM), log2-transformed and
+                   z-score normalized."))
+      })
+    } else {
+      
+      # Bulk-tissue expression figure title
+      output$bulk_figure_title <- renderPrint({
+        cat(paste('Bulk-tissue Gene Expression Scatterplots'))
+      })
+      
+      # Bulk-tissue Scatterplots ----
+      output$He_figure <- renderPlot({
+        He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
+                                          summarize(median_rank = median(expression)), 
+                                        by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
+                     fill = layer)) +
+          # Median line
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
+                        colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          # Limit set to min and max expression value across all datasets
+          ylim(-3,3) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(x = "\nCortical Layer", y = "Z-Score Normalized Expression", 
+               title = "He et al Scatter plot") +
+          theme(axis.text.x = element_text(size = 13), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
+      }, height = heatmapHeight)
+      
+      output$Maynard_figure <- renderPlot({
+        Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
+                                               group_by(layer) %>% 
+                                               summarize(median_rank = median(expression)), 
+                                             by = "layer") %>%
+          mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
+                                                  "L6", "WM"))) %>%
+          ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
+                     fill = layer)) +
+          # Median line
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
+                        colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) +
+          # Limit set to min and max expression value across all datasets
+          ylim(-3,3) +
+          guides(fill = "none") +
+          theme_bw() +
+          labs(x = "\nCortical Layer", y = "Z-Score Normalized Expression", 
+               title = "Maynard et al Scatter plot") +
+          theme(axis.text.x = element_text(size = 13), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
+      }, height = heatmapHeight) 
+      
+      output$bulk_figure_caption <- renderPrint({
+        cat(paste("Fig 2. The scatter plots were created using data from He et al 
+                   and Maynard et al. Raw RNA-seq data was processed and 
+                   normalized through counts per million (CPM), log2-transformed
+                   and z-score normalized. The horizontal bars indicate the median 
+                   of the gene expression values for that layer across all genes."))
+      })
+    }
+    
+    ## AIBS Figures ##
+    
+    # AIBS heatmaps ----
+    if (length(selected_gene_list_multiple) <= 30) {
+      
+      # AIBS figure title
+      output$AIBS_figure_title <- renderPrint({
+        cat(paste('Cell type-specific Gene Expression Heatmaps'))
+      })
+      
+      # GABAergic heatmap ----
       output$AIBS_figure_GABA <- renderPlot({
         ggplot(data = AIBS_GABA_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
@@ -593,7 +602,7 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
                fill = "Z-Score\nNormalized\nExpression") +
-          theme(axis.text.x = element_text(size = 13), 
+          theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
                 axis.title.y = element_text(size = 17),
@@ -602,6 +611,7 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
+      # Glutamatergic heatmap ----
       output$AIBS_figure_GLUT <- renderPlot({
         ggplot(data = AIBS_GLUT_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
@@ -610,7 +620,7 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
                fill = "Z-Score\nNormalized\nExpression") +
-          theme(axis.text.x = element_text(size = 13), 
+          theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
                 axis.title.y = element_text(size = 17),
@@ -619,6 +629,7 @@ server <- function(input, output, session) {
                 plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
+      # Non-neuronal heatmap ----
       output$AIBS_figure_NONN <- renderPlot({
         ggplot(data = AIBS_NONN_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
@@ -627,7 +638,7 @@ server <- function(input, output, session) {
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
           labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
                fill = "Z-Score\nNormalized\nExpression") +
-          theme(axis.text.x = element_text(size = 13), 
+          theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
                 axis.title.x = element_text(size = 17),
                 axis.title.y = element_text(size = 17),
@@ -642,12 +653,22 @@ server <- function(input, output, session) {
                    the Allen Institute of Brain Science (AIBS), specifically 
                    from the middle temporal gyrus (MTG). The raw RNA-seq data 
                    was pseudo-bulked at the layer level and normalized on using 
-                   counts per million (CPM) and log2-transformed. The heatmaps 
-                   represent the expression of the selected genes on a per-cell 
-                   type basis, using the labels provided by AIBS."))
+                   counts per million (CPM), log2-transformed and z-score 
+                   normalized. The heatmaps represent the expression of the 
+                   selected genes on a per cell-type basis, using the labels 
+                   provided by AIBS."))
       })
-    # Scatterplots
+      
+    # AIBS scatterplots ----
+      
     } else {
+      
+      # AIBS figure title
+      output$AIBS_figure_title <- renderPrint({
+        cat(paste('Cell type-specific Gene Expression Scatterplots'))
+      })
+      
+      # GABAergic scatterplot ----
       output$AIBS_figure_GABA <- renderPlot({
         AIBS_GABA_heatmap_data %<>% 
           inner_join(AIBS_GABA_heatmap_data %>% group_by(layer) %>% 
@@ -659,12 +680,21 @@ server <- function(input, output, session) {
                      names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(-3,3)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Expression", title = "GABAergic Expression")
+          labs(x = "\nCortical Layer", y = "Z-Score Normalized Expression", 
+               title = "GABAergic Expression") +
+          theme(axis.text.x = element_text(size = 13), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
+      # Glutamatergic scatterplot ----
       output$AIBS_figure_GLUT <- renderPlot({
         AIBS_GLUT_heatmap_data %<>% inner_join(AIBS_GLUT_heatmap_data %>% group_by(layer) %>% 
                                      summarize(median_rank = median(expression)), 
@@ -675,12 +705,21 @@ server <- function(input, output, session) {
                      names = gene_symbol, fill = layer)) +
           geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
                         colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(-3,3)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Expression", title = "Glutamatergic Expression")
+          labs(x = "\nCortical Layer", y = "Z-Score Normalized Expression", 
+               title = "Glutamatergic Expression") +
+          theme(axis.text.x = element_text(size = 13), 
+                axis.text.y = element_text(size = 13),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
+      # Non-neuronal scatterplot ----
       output$AIBS_figure_NONN <- renderPlot({
         AIBS_NONN_heatmap_data %<>% inner_join(AIBS_NONN_heatmap_data 
                                                 %>% group_by(layer) %>% 
@@ -690,24 +729,55 @@ server <- function(input, output, session) {
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, 
                      names = gene_symbol, fill = layer)) +
-          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), colour = "black", linetype = 1) +
-          geom_jitter(width = .05, alpha = 0.4) + ylim(c(0,16)) +
+          geom_errorbar(aes(ymax = median_rank, ymin = median_rank), 
+                        colour = "black", linetype = 1) +
+          geom_jitter(width = .05, alpha = 0.4) + ylim(c(-3,3)) +
           guides(fill = "none") +
           theme_bw() +
-          labs(x = "Layer", y = "Expression", title = "Non-neuronal Expression")
+          labs(x = "\nCortical Layer", y = "Z-Score Normalized Expression", 
+               title = "Non-neuronal Expression") +
+          theme(axis.text.x = element_text(size = 13), 
+                axis.text.y = element_text(size = 13, hjust = 0.05),
+                axis.title.x = element_text(size = 17),
+                axis.title.y = element_text(size = 17),
+                legend.title = element_text(size = 12),
+                legend.text = element_text(size = 11),
+                plot.title = element_text(size=17))
       }, height = heatmapHeight)
       
       output$AIBS_figure_caption <- renderPrint({
-        cat(paste("Fig 3. The dot plots were created using the scRNA-seq data 
+        cat(paste("Fig 3. The scatter plots were created using the scRNA-seq data 
                   from the Allen Institute of Brain Science which was created from 
                   live tissue, specifically from the middle temporal gyrus (MTG). 
                   The data was first log(x+1) normalized on a per-gene basis and 
                   the mean of all samples were taken on a per-gene and layer basis. 
                   The mean was then transformed using z-score normalization. As 
-                  there were three cell types identified, the dot plots represent 
+                  there were three cell types identified, the scatter plots represent 
                   the expression of the selected genes on a per-cell type basis. 
                   The line represents the median of the gene expression values 
                   for all genes in that layer."))
+      })
+      
+      # Summary textbox ----
+      
+      # Summary textbox title
+      output$summary_multiple_title <- renderPrint({
+        cat(paste('Summary Textbox'))
+      })
+      
+      # Summary textbox
+      output$summary_multiple <- renderPrint({
+        cat(paste0(
+          assayed_gene_string(selected_gene_list_multiple, He_DS1_logCPM_dataset,
+                              Maynard_logCPM_dataset, "multiple"),
+          #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
+          stats_string(selected_gene_list_multiple, multi_gene_cor, 
+                       p_value_multiple_gene, multi_gene_quantile, "multiple"),
+          layer_marker_preempt_string("He", "multiple", selected_gene_list_multiple),
+          paste0(layer_marker_string(He_layer_marker, "multiple")),
+          layer_marker_preempt_string("Maynard", "multiple", selected_gene_list_multiple),
+          paste0(layer_marker_string(Maynard_layer_marker, "multiple"))
+        ))
       })
     }
   })
