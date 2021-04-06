@@ -35,12 +35,17 @@ assayed_gene_string <- function(genelist, He_df, Maynard_df, single_or_multiple)
 }
 
 layer_marker_preempt_string <- function(source_df, single_or_multiple, genelist) {
+  if (source_df == "He") {
+    in_the <- "In the "
+  } else {
+    in_the <- "\nIn the "
+  }
   if (single_or_multiple == "single") {
-    statement <- cat(paste0("\nIn the ", source_df,
+    statement <- cat(paste0(in_the, source_df,
                             " et al data, ", genelist, 
                             " was found to "))
   } else {
-    statement <- cat(paste0("\nIn the ", source_df, 
+    statement <- cat(paste0(in_the, source_df, 
                             " et al data, these genes marked these specific layers: \n"))
   }
   
@@ -128,7 +133,7 @@ layer_marker_string <- function(layer_marker_list, single_or_multiple) {
         if (length(unlist(layer_marker_list$WM)) == 0) {
           ""
         } else paste0("- ", length(unlist(layer_marker_list$WM)), 
-                      " gene(s) marked layer 6 (",
+                      " gene(s) marked white matter (",
                       paste(layer_marker_list$WM, collapse = ", "), ").\n")
       ))
     }
@@ -142,24 +147,24 @@ stats_string <- function(genelist, correlation, p_value, quantile_stat, single_o
     statement <- cat(paste0(
       "\nBetween the bulk-tissue datasets, ",
       genelist,
-      "'s expression across the layers had a Pearson correlation value of ", 
+      "'s expression across the layers has a Pearson correlation value of ", 
       correlation,
       " (p = ",
       p_value,
       "), which ranks in the ",
       quantile_stat,
-      "th quantile.\n"
+      "th quantile in all gene-to-gene correlation values across datasets.\n"
     ))
   } else {
     statement <- cat(paste0(
-      "\nBetween the He and Maynard datasets, the input genes' expression had a ",
+      "\nBetween the He and Maynard datasets, the input genes' expression has a ",
       "mean Pearson correlation value of ", 
       correlation,
       " (p = ",
       p_value,
       "), which ranks in the ",
       quantile_stat,
-      "th quantile.\n"
+      "th quantile in all gene-to-gene correlation values across datasets.\n"
     ))
   }
   return(statement)

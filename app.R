@@ -41,18 +41,32 @@ ui <- fluidPage(
   tags$head(
     includeHTML("google-analytics.html"),
     tags$style(
-    HTML("#summary_multiple {
+    HTML("
+          #summary_statistics_single {
               font-family: 
                 'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
               font-size: 
                 14px; }
-          #summary_single {
+          #summary_markers_single {
               font-family: 
                 'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
               font-size: 
-                14px;
-            }")),
-    tags$style(type='text/css', '#summary_multiple {white-space: pre-wrap;}')),
+                14px; }
+          #summary_statistics_multiple {
+              font-family: 
+                'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+              font-size: 
+                14px; }
+          #summary_markers_multiple {
+              font-family: 
+                'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+              font-size: 
+                14px; }
+          ")),
+    # Wrap text in long text boxes
+    tags$style(type='text/css', '#summary_statistics_single {white-space: pre-wrap;}'),
+    tags$style(type='text/css', '#summary_statistics_multiple {white-space: pre-wrap;}'),
+  ),
   navbarPage(
     title = "LaminaRGeneVis", 
     # Visualize gene expression across layers through heatmap or barplot
@@ -172,7 +186,13 @@ ui <- fluidPage(
                 p(textOutput("barplot_caption"),style='font-size:15px'),
                 br(),
                 br(),
-                p(verbatimTextOutput('summary_single'),style='font-size:15px'),
+                h4(textOutput('summary_statistics_title')),
+                p(verbatimTextOutput("summary_statistics_single"),
+                  style='font-size:15px'),
+                br(),
+                h4(textOutput('summary_markers_title')),
+                p(verbatimTextOutput("summary_markers_single"),
+                  style='font-size:15px'),
               ),
               ### Multiple gene visualization ----
               conditionalPanel(
@@ -181,9 +201,9 @@ ui <- fluidPage(
                 condition = "input.selector == 'Multiple Genes'",
                 br(),
                 # Show AUC heatmap
-                h4(textOutput('AUROC_heatmap_title')),
-                plotOutput("AUROC_heatmap") %>% withSpinner(),
-                p(textOutput("AUROC_heatmap_caption"),style='font-size:15px'),
+                h4(textOutput('AUC_heatmap_title')),
+                plotOutput("AUC_heatmap") %>% withSpinner(),
+                p(textOutput("AUC_heatmap_caption"),style='font-size:15px'),
                 br(),
                 #Output heatmap visualizations for bulk tissue RNA-seq
                 h4(textOutput('bulk_figure_title')),
@@ -201,8 +221,11 @@ ui <- fluidPage(
                 plotOutput("AIBS_figure_NONN", height = "auto") %>% withSpinner(),
                 p(textOutput("AIBS_figure_caption"),style='font-size:15px'),
                 br(),
-                h4(textOutput('summary_multiple_title')),
-                p(verbatimTextOutput("summary_multiple"),style='font-size:15px'),
+                h4(textOutput('summary_statistics_multiple_title')),
+                p(verbatimTextOutput("summary_statistics_multiple"),style='font-size:15px'),
+                br(),
+                h4(textOutput('summary_markers_multiple_title')),
+                p(verbatimTextOutput("summary_markers_multiple")),
               )
             )
           )
@@ -240,20 +263,20 @@ server <- function(input, output, session) {
   
   #Hide plot and titles until when genes are submitted
   output$Barplot <- NULL
-  output$summary_single_title <- NULL
   output$bulk_figure_title <- NULL
   output$He_figure <- NULL
   output$Maynard_figure <- NULL 
-  output$AUROC_heatmap_title <- NULL
+  output$AUC_heatmap_title <- NULL
   output$heatmap_caption <- NULL
-  output$AUROC_heatmap <- NULL
+  output$AUC_heatmap <- NULL
   output$scRNA_figure_title <- NULL
   output$AIBS_figure_GABA <- NULL
   output$AIBS_figure_GLUT <- NULL
   output$AIBS_figure_NONN <- NULL
-  output$summary_multiple_title <- NULL
+  output$summary_statistics_title <- NULL
+  output$summary_markers_title <- NULL
   
-  ## Single gene input ----
+  # Single gene input ----
   observeEvent(input$submit_barplot, {
     #When the submit button is pressed, change to the Visualization page
     updateTabsetPanel(session, "tabset", selected = "visualization")
@@ -339,13 +362,13 @@ server <- function(input, output, session) {
       Maynard_dataset = Maynard_logCPM_dataset, 
       He_Maynard_gene_correlation)
     
-    # Single gene summary table title
-    output$summary_single_title <- renderPrint({
-      cat(paste("Summary:"))
+    # Agreement Statistics textbox title
+    output$summary_statistics_title <- renderPrint({
+      cat(paste('Agreement Statistics'))
     })
     
     # Summary textbox
-    output$summary_single <- renderPrint({
+    output$summary_statistics_single <- renderPrint({
       cat(paste0(
         assayed_gene_string(
           genelist = selected_gene_list_single, 
@@ -357,13 +380,24 @@ server <- function(input, output, session) {
           correlation = single_gene_cor, 
           p_value = p_value_single_gene, 
           quantile_stat = single_gene_quantile, 
-          single_or_multiple = "single"),
+          single_or_multiple = "single")
+      ))
+    })
+    
+    # Layer marker textbox title
+    output$summary_markers_title <- renderPrint({
+      cat(paste('Layer Markers'))
+    })
+    
+    # Summary textbox
+    output$summary_markers_single <- renderPrint({
+      cat(paste0(
         layer_marker_preempt_string("He", "single", selected_gene_list_single),
         paste0(layer_marker_string(He_layer_marker, "single")),
         layer_marker_preempt_string("Maynard", "single", selected_gene_list_single),
         paste0(layer_marker_string(Maynard_layer_marker,  "single"))
       ))
-    }) 
+    })
   })
   
   
@@ -418,12 +452,12 @@ server <- function(input, output, session) {
     
     ### AUC heatmap ----
     # Heatmap figure title
-    output$AUROC_heatmap_title <- renderPrint({
+    output$AUC_heatmap_title <- renderPrint({
       cat(paste('Layer-specific Gene Enrichment Heatmap'))
     })
     
     # Heatmap figure
-    output$AUROC_heatmap <- renderPlot({
+    output$AUC_heatmap <- renderPlot({
       ggplot(data = AUROC_df, mapping = aes(x = dataset, y = Layer, fill = AUROC)) +
         geom_tile() +
         scale_fill_distiller(palette = "RdBu", direction = -1, limits = c(0,1)) +
@@ -447,7 +481,7 @@ server <- function(input, output, session) {
     })
     
     # AUC heatmap figure caption
-    output$AUROC_heatmap_caption <- renderPrint({
+    output$AUC_heatmap_caption <- renderPrint({
       cat(paste("Fig 1. Each dataset was filtered for genes with CPM > 0.1 
                  across all layers prior to log2 and z-score normalization. 
                  Layers were ranked in each dataset with respect to the gene 
@@ -475,7 +509,7 @@ server <- function(input, output, session) {
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer", title = "He et al data", 
+          labs(y = "Cortical Layer", x = "", title = "He et al data", 
                fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(size = 13, angle = 25, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
@@ -493,7 +527,7 @@ server <- function(input, output, session) {
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
           scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer", title = "Maynard et al data",
+          labs(y = "Cortical Layer", x = "", title = "Maynard et al data",
                fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
@@ -600,7 +634,7 @@ server <- function(input, output, session) {
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer\n", title = "GABAergic expression",
+          labs(y = "Cortical Layer", x = "", title = "GABAergic expression",
                fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
@@ -618,7 +652,7 @@ server <- function(input, output, session) {
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer\n", title = "Glutamatergic expression",
+          labs(y = "Cortical Layer", x = "", title = "Glutamatergic expression",
                fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
@@ -636,7 +670,7 @@ server <- function(input, output, session) {
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
-          labs(y = "", x = "\nCortical Layer\n", title = "Non-neuronal expression",
+          labs(y = "Cortical Layer", x = "", title = "Non-neuronal expression",
                fill = "Z-Score\nNormalized\nExpression") +
           theme(axis.text.x = element_text(angle = 25, size = 13, hjust = 0.95), 
                 axis.text.y = element_text(size = 13),
@@ -757,29 +791,40 @@ server <- function(input, output, session) {
                   The line represents the median of the gene expression values 
                   for all genes in that layer."))
       })
-      
-      # Summary textbox ----
-      
-      # Summary textbox title
-      output$summary_multiple_title <- renderPrint({
-        cat(paste('Summary Textbox'))
-      })
-      
-      # Summary textbox
-      output$summary_multiple <- renderPrint({
-        cat(paste0(
-          assayed_gene_string(selected_gene_list_multiple, He_DS1_logCPM_dataset,
-                              Maynard_logCPM_dataset, "multiple"),
-          #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
-          stats_string(selected_gene_list_multiple, multi_gene_cor, 
-                       p_value_multiple_gene, multi_gene_quantile, "multiple"),
-          layer_marker_preempt_string("He", "multiple", selected_gene_list_multiple),
-          paste0(layer_marker_string(He_layer_marker, "multiple")),
-          layer_marker_preempt_string("Maynard", "multiple", selected_gene_list_multiple),
-          paste0(layer_marker_string(Maynard_layer_marker, "multiple"))
-        ))
-      })
     }
+    
+    # Summary textbox ----
+    
+    # Agreement Statistics textbox title
+    output$summary_statistics_multiple_title <- renderPrint({
+      cat(paste('Agreement Statistics'))
+    })
+    
+    # Summary textbox
+    output$summary_statistics_multiple <- renderPrint({
+      cat(paste0(
+        assayed_gene_string(selected_gene_list_multiple, He_DS1_logCPM_dataset,
+                            Maynard_logCPM_dataset, "multiple"),
+        #Compared genome-wide, the AUC value for the input genes is [?] (p = <as currently setup>).",
+        stats_string(selected_gene_list_multiple, multi_gene_cor, 
+                     p_value_multiple_gene, multi_gene_quantile, "multiple")
+      ))
+    })
+    
+    # Layer marker textbox title
+    output$summary_markers_multiple_title <- renderPrint({
+      cat(paste('Layer Markers'))
+    })
+    
+    # Summary textbox
+    output$summary_markers_multiple <- renderPrint({
+      cat(paste0(
+        layer_marker_preempt_string("He", "multiple", selected_gene_list_multiple),
+        paste0(layer_marker_string(He_layer_marker, "multiple")),
+        layer_marker_preempt_string("Maynard", "multiple", selected_gene_list_multiple),
+        paste0(layer_marker_string(Maynard_layer_marker, "multiple"))
+      ))
+    })
   })
 }
 
