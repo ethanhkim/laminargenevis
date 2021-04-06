@@ -409,19 +409,19 @@ server <- function(input, output, session) {
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     # Process data with input genes
     He_heatmap_data <- process_heatmap_data(
-      source = "He", source_dataset = He_DS1_logCPM_filtered_dataset, 
+      source = "He", source_dataset = He_DS1_logCPM_dataset,
       input_genelist = selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_data(
-      source = "Maynard", source_dataset = Maynard_logCPM_filtered_dataset, 
+      source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
       input_genelist = selected_gene_list_multiple)
     AIBS_GABA_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
     AIBS_GLUT_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
     AIBS_NONN_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_filtered_dataset,
+      source = "Allen", source_dataset = Allen_logCPM_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
 
     He_layer_marker <- separate_layers(layer_marker_lookup_tbl, 

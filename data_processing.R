@@ -40,31 +40,80 @@ heatmap_height <- function(genelist) {
   }
 }
 
+## Function to process barplot data ##
+process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, 
+                                 Allen_dataset) {
+  
+  he_data <- He_dataset %>%
+    filter(gene_symbol %in% input_genelist) %>%
+    add_column(source_dataset = "He")
+  maynard_data <- Maynard_dataset %>%
+    filter(gene_symbol %in% input_genelist) %>%
+    add_column(source_dataset = "Maynard")
+  allen_MTG_data <- Allen_dataset %>%
+    filter(gene_symbol %in% input_genelist) %>% 
+    mutate(source_dataset = paste("ABI", class_label, sep = "_")) %>%
+    select(-class_label) %>% 
+    select(gene_symbol, L1, L2, L3, L4, L5, L6, WM, source_dataset)
+  
+  barplot_data <- rbind(he_data, maynard_data, 
+                        allen_MTG_data) %>%
+    pivot_longer(cols = L1:WM,
+                 names_to = "layer",
+                 values_to = "expression") %>%
+    mutate(source_dataset = factor(source_dataset, 
+                                   levels = c("He", "Maynard", "ABI_GABAergic", 
+                                              "ABI_Glutamatergic", 
+                                              "ABI_Non-neuronal")))
+  return(barplot_data)
+}
+
+separate_layers <- function(input_table, input_genelist, source) {
+  
+  layer_markers <- list()
+  for(i in c(1:7)) {
+    layer <- input_table %>%
+      filter(stri_detect_fixed(source_dataset, source)) %>%
+      filter(gene_symbol %in% input_genelist, layer_marker == i) %>%
+      pull(gene_symbol)
+    layer_markers[[i]] <- layer
+  }
+  
+  names(layer_markers) <- c("L1", "L2", "L3", "L4", "L5", "L6", "WM")
+
+  return(layer_markers)
+}
+
 ## Function to process heatmap data for bulk-tissue and sn-RNAseq ##
 process_heatmap_data <- function(source, source_dataset, input_genelist, 
-                                     cell_type = NA) {
+                                 cell_type = NA) {
   
   # If processing Allen data:
   if (source == "Allen") {
     # Filter source data to only take specific cell_type
-    source_dataset %<>% filter(class_label == cell_type)
+    source_dataset %<>% filter(class_label == cell_type) %>%
+      select(-class_label)
     # Create heatmap data
     processed_heatmap_data <- source_dataset %>%
       # Filter for genes in inputted gene list
       filter(gene_symbol %in% input_genelist) %>%
       # Filter out duplicate genes
       distinct(gene_symbol, .keep_all = TRUE) %>%
+      column_to_rownames(var = "gene_symbol") %>%
+      t() %>% scale() %>% t() %>% as.data.frame() %>%
+      rownames_to_column(var = "gene_symbol") %>%
       # Lengthen wide data
       pivot_longer(cols = L1:WM, names_to = "cortical_layer_label",
                    values_to = "expression") %>%
       # Rename cortical_layer_label column to layer
-      rename(layer = cortical_layer_label) %>%
-      # Remove class_label column
-      select(-class_label)
-  # If processing bulk-tissue (i.e., He or Maynard)
+      rename(layer = cortical_layer_label)
+    # If processing bulk-tissue (i.e., He or Maynard)
   } else if (source == "He" | source == "Maynard") {
     # Create heatmap data
     processed_heatmap_data <- source_dataset %>%
+      column_to_rownames(var = "gene_symbol") %>%
+      t() %>% scale() %>% t() %>% as.data.frame() %>%
+      rownames_to_column(var = "gene_symbol") %>%
       # Filter for genes in inputted gene list
       filter(gene_symbol %in% input_genelist) %>%
       # Filter out duplicate genes
@@ -115,57 +164,11 @@ process_heatmap_data <- function(source, source_dataset, input_genelist,
   
   processed_heatmap_data$layer <- with(processed_heatmap_data, 
                                        factor(layer, 
-                                       levels = rev(sort(unique(layer)))))
+                                              levels = rev(sort(unique(layer)))))
   
   # Return ordered heatmap data in long format
   return(processed_heatmap_data)
 }
-
-## Function to process barplot data ##
-
-process_barplot_data <- function(input_genelist, He_dataset, Maynard_dataset, 
-                                 Allen_dataset) {
-  
-  he_data <- He_dataset %>%
-    filter(gene_symbol %in% input_genelist) %>%
-    add_column(source_dataset = "He")
-  maynard_data <- Maynard_dataset %>%
-    filter(gene_symbol %in% input_genelist) %>%
-    add_column(source_dataset = "Maynard")
-  allen_MTG_data <- Allen_dataset %>%
-    filter(gene_symbol %in% input_genelist) %>% 
-    mutate(source_dataset = paste("ABI", class_label, sep = "_")) %>%
-    select(-class_label) %>% 
-    select(gene_symbol, L1, L2, L3, L4, L5, L6, WM, source_dataset)
-  
-  barplot_data <- rbind(he_data, maynard_data, 
-                        allen_MTG_data) %>%
-    pivot_longer(cols = L1:WM,
-                 names_to = "layer",
-                 values_to = "expression") %>%
-    mutate(source_dataset = factor(source_dataset, 
-                                   levels = c("He", "Maynard", "ABI_GABAergic", 
-                                              "ABI_Glutamatergic", 
-                                              "ABI_Non-neuronal")))
-  return(barplot_data)
-}
-
-separate_layers <- function(input_table, input_genelist, source) {
-  
-  layer_markers <- list()
-  for(i in c(1:7)) {
-    layer <- input_table %>%
-      filter(stri_detect_fixed(source_dataset, source)) %>%
-      filter(gene_symbol %in% input_genelist, layer_marker == i) %>%
-      pull(gene_symbol)
-    layer_markers[[i]] <- layer
-  }
-  
-  names(layer_markers) <- c("L1", "L2", "L3", "L4", "L5", "L6", "WM")
-
-  return(layer_markers)
-}
-
 
 ## Functions for generating singe or multi-gene correlations across He & Maynard datasets
 
