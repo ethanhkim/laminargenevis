@@ -8,10 +8,9 @@ This web application allows you to examine layer-specific gene expression across
 ## App Workflow:
 Here's a quick overview of the app! Multiple datasets of RNA-seq expression (described below) have been standardized for ease of comparison as shown in (A). Users have the option of choosing to examine either Single Gene or Multiple Genes in the HGNC gene symbol format. Choosing Single Gene will give you a plot similar to (B), and choosing Multiple Genes will give you multiple plots, including the plot shown in (C).
 
-Workflow Figure:
-![Workflow Figure](https://github.com/ethanhkim/laminargenevis/www/pageFigure.png)
+![Workflow Figure](https://github.com/ethanhkim/laminargenevis/blob/master/www/pageFigure.png)
 
-Source Data:
+## Source Data:
 The data for this application has been sourced from these following studies and institutions:
 
 1. [He et al. (2017): ](https://pubmed.ncbi.nlm.nih.gov/28414332/) 
