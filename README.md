@@ -23,7 +23,7 @@ The data for this application has been sourced from these following studies and 
 
 ## Data processing and availability:
 
-All data processing scripts are available under [/raw_data_processing](https://github.com/ethanhkim/laminargenevis/tree/master/raw_data_processing). Processed data are available under [/data/processed](https://github.com/ethanhkim/laminargenevis/tree/master/data/processed). 
+Data processing scripts are available under [/raw_data_processing](https://github.com/ethanhkim/laminargenevis/tree/master/raw_data_processing). For processing the raw files for He et al, the scripts are available [here](https://github.com/derekhoward/he_seq.). Processed data are available under [/data/processed](https://github.com/ethanhkim/laminargenevis/tree/master/data/processed). 
 
 ## Support
 This work was supported in part by funding provided NSERC, and by [Brain Canada](https://braincanada.ca/), in partnership with [Health Canada](https://www.canada.ca/en/health-canada.html), for the [Canadian Open Neuroscience Platform initiative](https://conp.ca/).

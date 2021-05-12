@@ -21,16 +21,16 @@ library(shinycssloaders)
 library(DT)
 
 # Source processing scripts #
-source("string_processing.R") 
-source("data_processing.R")
+source("src/string_processing.R") 
+source("src/data_processing.R")
 
 # Load in data #
 load(here("data", "processed", "He_DS1_logCPM_dataset.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Allen_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_DS1_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Maynard_logCPM_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "Maynard_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
-load(here("data", "processed", "Allen_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Allen_downsampled_logCPM_dataset.Rdata"), verbose = TRUE)
+load(here("data", "processed", "Allen_downsampled_logCPM_filtered_dataset.Rdata"), verbose = TRUE)
 load(here("data", "processed", "He_Maynard_gene_correlation.Rdata"), verbose = TRUE)
 load(here("data", "processed", "layer_marker_table.Rdata"))
 
@@ -254,7 +254,7 @@ server <- function(input, output, session) {
   top_and_bottom_5th_perc <- top_and_bottom_quantile(
     Maynard_logCPM_dataset, 
     He_DS1_logCPM_dataset, 
-    Allen_logCPM_dataset
+    Allen_downsampled_logCPM_dataset
   )
   
   # Give available values for drop-down bar for single gene
@@ -288,7 +288,7 @@ server <- function(input, output, session) {
       input_genelist = selected_gene_list_single,
       He_dataset = He_DS1_logCPM_dataset, 
       Maynard_dataset = Maynard_logCPM_dataset,
-      Allen_dataset = Allen_logCPM_dataset)
+      Allen_dataset = Allen_downsampled_logCPM_dataset)
     
     # Layer marker for input gene
     He_layer_marker <- separate_layers(
@@ -310,8 +310,6 @@ server <- function(input, output, session) {
         ggtitle(paste0('Expression of ', selected_gene_list_single, 
                        ' across the human neocortex')) +
         geom_hline(yintercept = top_and_bottom_5th_perc$top_5,
-                   color="black", linetype="dashed") +
-        geom_hline(yintercept = top_and_bottom_5th_perc$bottom_5,
                    color="black", linetype="dashed") +
         theme_bw() + 
         scale_fill_discrete(
@@ -409,19 +407,19 @@ server <- function(input, output, session) {
     selected_gene_list_multiple <- isolate(process_gene_input(input$multiple_genelist))
     # Process data with input genes
     He_heatmap_data <- process_heatmap_data(
-      source = "He", source_dataset = He_DS1_logCPM_dataset,
+      source = "He", source_dataset = He_DS1_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple)
     Maynard_heatmap_data <- process_heatmap_data(
-      source = "Maynard", source_dataset = Maynard_logCPM_dataset, 
+      source = "Maynard", source_dataset = Maynard_logCPM_filtered_dataset, 
       input_genelist = selected_gene_list_multiple)
     AIBS_GABA_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_downsampled_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "GABAergic")
     AIBS_GLUT_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_downsampled_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Glutamatergic")
     AIBS_NONN_heatmap_data <- process_heatmap_data(
-      source = "Allen", source_dataset = Allen_logCPM_dataset,
+      source = "Allen", source_dataset = Allen_downsampled_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
 
     He_layer_marker <- separate_layers(layer_marker_lookup_tbl, 
@@ -433,17 +431,19 @@ server <- function(input, output, session) {
     
     # Generate correlation value for multiple gene and the quantile that value belongs in
     multi_gene_cor <- multi_gene_correlation(selected_gene_list_multiple, 
-                                             He_DS1_logCPM_dataset, Maynard_logCPM_dataset)
+                                             He_DS1_logCPM_filtered_dataset, 
+                                             Maynard_logCPM_filtered_dataset)
     multi_gene_quantile <- quantile_distribution(He_Maynard_gene_correlation, multi_gene_cor)
     p_value_multiple_gene <- wilcoxtest(selected_gene_list_multiple, 
-                                        He_DS1_logCPM_dataset, Maynard_logCPM_dataset, 
+                                        He_DS1_logCPM_filtered_dataset, 
+                                        Maynard_logCPM_filtered_dataset, 
                                         He_Maynard_gene_correlation)
     
     # Code for AUROC analysis adapted from Derek Howard & Leon French - refer to data_processing.R
     AUROC_bulk_data <- AUROC_bulk(He_DS1_logCPM_filtered_dataset, 
                                   Maynard_logCPM_filtered_dataset, 
                                   selected_gene_list_multiple) 
-    AUROC_AIBS_data <- AUROC_AIBS(Allen_logCPM_filtered_dataset, 
+    AUROC_AIBS_data <- AUROC_AIBS(Allen_downsampled_logCPM_filtered_dataset, 
                                   selected_gene_list_multiple)
     AUROC_df <- AUROC_data(AUROC_bulk_data, AUROC_AIBS_data)
     
