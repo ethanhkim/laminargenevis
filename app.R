@@ -251,13 +251,6 @@ server <- function(input, output, session) {
       names_to = "source_dataset",
       values_to = "layer_marker")
   
-  # Calculate top and bottom 5 percentile for values
-  top_and_bottom_5th_perc <- top_and_bottom_quantile(
-    Maynard_logCPM_dataset, 
-    He_DS1_logCPM_dataset, 
-    Allen_downsampled_logCPM_dataset
-  )
-  
   # Give available values for drop-down bar for single gene
   updateSelectizeInput(session, inputId = "genelist", selected = 'RELN',
                        choices = common_genelist, server = TRUE)
@@ -310,8 +303,6 @@ server <- function(input, output, session) {
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
         ggtitle(paste0('Expression of ', selected_gene_list_single, 
                        ' across the human neocortex')) +
-        geom_hline(yintercept = top_and_bottom_5th_perc$top_5,
-                   color="black", linetype="dashed") +
         theme_bw() + 
         scale_fill_discrete(
           name="Source Dataset", 
@@ -335,10 +326,7 @@ server <- function(input, output, session) {
       cat(paste("Fig 1. The barplots were created using data from He et al, 
                 Maynard et al and the Allen Institute for Brain Science (AIBS). 
                 Raw RNA-seq data was processed and normalized through counts 
-                per million (CPM) and log2-transformed. The horizontal dashed 
-                lines represent the value of the top (95th) and bottom (5th) 
-                quantile of normalized expression values across all 
-                normalized data."))
+                per million (CPM) and log2-transformed."))
     })
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations

@@ -5,32 +5,6 @@ process_Zeng_dataset <- function(Zeng_dataset) {
     select("gene_symbol", "marker_annotation", "expression_level")
 }
 
-
-## Function to generate top 95 and bottom 5% quantile values
-top_and_bottom_quantile <- function(Maynard_data, He_data, AIBS_data) {
-  
-  Maynard_values <- Maynard_data %>%
-    pivot_longer(cols = L1:WM) %>%
-    pull(var = "value")
-  
-  He_values <- He_data %>%
-    pivot_longer(cols = L1:WM) %>%
-    pull(var = "value")
-  
-  AIBS_values <- AIBS_data %>%
-    pivot_longer(cols = L1:WM) %>%
-    pull(var = "value")
-  
-  all_values <- c(Maynard_values, He_values, AIBS_values)
-  
-  values <- tibble(
-    bottom_5 = quantile(all_values, c(0.05), na.rm = T),
-    top_5 = quantile(all_values, c(0.95), na.rm = T),
-  )
-  
-  return(values)
-}
-
 ## Function to generate height for heatmap ##
 heatmap_height <- function(genelist) {
   if (length(genelist) <= 10) {
