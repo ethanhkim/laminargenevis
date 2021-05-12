@@ -95,13 +95,13 @@ process_heatmap_data <- function(source, source_dataset, input_genelist,
       select(-class_label)
     # Create heatmap data
     processed_heatmap_data <- source_dataset %>%
-      # Filter for genes in inputted gene list
-      filter(gene_symbol %in% input_genelist) %>%
       # Filter out duplicate genes
       distinct(gene_symbol, .keep_all = TRUE) %>%
       column_to_rownames(var = "gene_symbol") %>%
       t() %>% scale() %>% t() %>% as.data.frame() %>%
       rownames_to_column(var = "gene_symbol") %>%
+      # Filter for genes in inputted gene list
+      filter(gene_symbol %in% input_genelist) %>%
       # Lengthen wide data
       pivot_longer(cols = L1:WM, names_to = "cortical_layer_label",
                    values_to = "expression") %>%
@@ -175,13 +175,13 @@ process_heatmap_data <- function(source, source_dataset, input_genelist,
 single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
   
   He_gene <- He_dataset %>%
-    select(L1:gene_symbol) %>%
+    select(gene_symbol:WM) %>%
     filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t()
   
   Maynard_gene <- Maynard_dataset %>%
-    select(L1:gene_symbol) %>%
+    select(gene_symbol:WM) %>%
     filter(gene_symbol %in% input_gene) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
@@ -274,7 +274,7 @@ rank_AIBS_dataset <- function(source_dataset) {
   dataset_ranked <- source_dataset 
   gene_symbol <- dataset_ranked$gene_symbol
   dataset_ranked %<>% select(L1:L6) %>% map_df(rank, ties.method = "min") %>%
-    add_column(gene_symbol = gene_symbol, class_label = "GABAergic")
+    add_column(gene_symbol = gene_symbol)
   return(dataset_ranked)
 }
 
@@ -314,7 +314,7 @@ auroc_cell_type <- function(dataset, multiple_genelist, cell_type) {
     filter(class_label == cell_type)
   ranked_cell_type_df <- rank_AIBS_dataset(cell_type_df)
   indices <- return_indices(ranked_cell_type_df, multiple_genelist)
-  ranked_cell_type_df %<>% select(-gene_symbol, -class_label)
+  ranked_cell_type_df %<>% select(-gene_symbol)
   AUROC_cell_type <- map_df(ranked_cell_type_df, auroc_analytic, indices)
   AUROC_MWU <- map_df(ranked_cell_type_df, apply_MWU, indices)
   AUROC_cell_type %<>% rbind(AUROC_MWU) %>% as.data.frame()
@@ -380,6 +380,7 @@ AUROC_bulk <- function(He_dataset, Maynard_dataset, multiple_genelist) {
   AUROC %<>%
     add_column(pValue = bulk_table_pValue$adj.pvalues) %>%
     mutate(signif_marker = ifelse(!is.na(pValue), "*", ""))
+  return(AUROC)
 }
 
 ## Function for generating scRNA AUROC and p-value data
