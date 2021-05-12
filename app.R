@@ -130,7 +130,8 @@ ui <- fluidPage(
               # Figure
               img(src = 'pageFigure.png', 
                   style = "display: block; margin-left: auto; 
-                           margin-right: auto;"),
+                           margin-right: auto",
+                  height = '50%', width = '50%'),
               br(),
               h3("Source Data:"),
               p("The data for this application has been sourced from 
@@ -167,7 +168,7 @@ ui <- fluidPage(
               # Github link
               tags$div(
                 'The code for the application and the analyses used are available on ',
-                tags$a(href = "href = 'https://github.com/ethanhkim/transcriptome_app",
+                tags$a(href = "href = 'https://github.com/ethanhkim/laminargenevis",
                        "Github."), style = 'font-size:17px')),
             # Single or multiple gene visualizations ----
             tabPanel(

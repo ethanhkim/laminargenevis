@@ -3,7 +3,7 @@
 <!---[![DOI:<your number>](http://img.shields.io/badge/DOI-<your number>-<colour hexcode>.svg)](<doi link>)--->
 
 Welcome to LaminaRGeneVis! 
-This web application allows you to examine layer-specific gene expression across the cortex and determine layer annotations.
+This [web application](https://ethanhkim.shinyapps.io/laminargenevis/) allows you to examine layer-specific gene expression across the cortex and determine layer annotations.
 
 ## App Workflow:
 Here's a quick overview of the app! Multiple datasets of RNA-seq expression (described below) have been standardized for ease of comparison as shown in (A). Users have the option of choosing to examine either Single Gene or Multiple Genes in the HGNC gene symbol format. Choosing Single Gene will give you a plot similar to (B), and choosing Multiple Genes will give you multiple plots, including the plot shown in (C).
