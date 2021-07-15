@@ -171,7 +171,6 @@ single_gene_correlation <- function(input_gene, He_dataset, Maynard_dataset) {
 multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
   
   He_genes <- He_dataset %>%
-    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_genes) %>%
     arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
@@ -179,7 +178,6 @@ multi_gene_correlation <- function(input_genes, He_dataset, Maynard_dataset) {
     t()
   
   Maynard_genes <- Maynard_dataset %>%
-    select(L1:gene_symbol) %>%
     filter(gene_symbol %in% input_genes) %>%
     arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
@@ -222,7 +220,9 @@ wilcoxtest <- function(input_genelist, He_dataset, Maynard_dataset, He_Maynard_d
     arrange(gene_symbol) %>%
     column_to_rownames(var = "gene_symbol") %>%
     t() 
-  
+  if (length(input_genelist) == 1) {
+    return(format(signif(cor.test(He_genes[,1], Maynard_genes[,1])$p.value), digits = 4))
+  }
   # Pearson's correlation test for the user-selected genes
   He_Maynard_genes_cormatrix <- cor(He_genes, Maynard_genes, method = "pearson")
   # Get the diagonal (correlation of each gene against itself)
