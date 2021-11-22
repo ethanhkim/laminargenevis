@@ -182,6 +182,7 @@ ui <- fluidPage(
                 #Output barplot visualization
                 br(),
                 plotOutput("Barplot") %>% withSpinner(),
+                downloadButton("downloadBarplot", label = "download"),
                 br(),
                 br(),
                 p(textOutput("barplot_caption"),style='font-size:15px'),
@@ -205,12 +206,15 @@ ui <- fluidPage(
                 h4(textOutput('AUC_heatmap_title')),
                 plotOutput("AUC_heatmap") %>% withSpinner(),
                 p(textOutput("AUC_heatmap_caption"),style='font-size:15px'),
+                downloadButton("downloadAUCHeatmap", label = "download"),
                 br(),
                 #Output heatmap visualizations for bulk tissue RNA-seq
                 h4(textOutput('bulk_figure_title')),
                 br(),
                 plotOutput("He_figure", height = "auto") %>% withSpinner(),
+                downloadButton("downloadHePlot", label = "download"),
                 plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
+                downloadButton("downloadMaynardPlot", label = "download"),
                 br(),
                 p(textOutput("bulk_figure_caption"),style='font-size:15px'),
                 br(),
@@ -218,8 +222,11 @@ ui <- fluidPage(
                 h4(textOutput('AIBS_figure_title')),
                 br(),
                 plotOutput("AIBS_figure_GABA", height = "auto") %>% withSpinner(),
+                downloadButton("downloadAIBSGABAplot", label = "download"),
                 plotOutput("AIBS_figure_GLUT", height = "auto") %>% withSpinner(),
+                downloadButton("downloadAIBSGLUTplot", label = "download"),
                 plotOutput("AIBS_figure_NONN", height = "auto") %>% withSpinner(),
+                downloadButton("downloadAIBSNONNplot", label = "download"),
                 p(textOutput("AIBS_figure_caption"),style='font-size:15px'),
                 br(),
                 h4(textOutput('summary_statistics_multiple_title')),
@@ -269,6 +276,10 @@ server <- function(input, output, session) {
   output$AIBS_figure_NONN <- NULL
   output$summary_statistics_title <- NULL
   output$summary_markers_title <- NULL
+  output$downloadBarplot <- NULL
+  
+  # store plots to print from downloadButton
+  plots <- reactiveValues()
   
   # Single gene input ----
   observeEvent(input$submit_barplot, {
@@ -296,7 +307,7 @@ server <- function(input, output, session) {
     
     # Single gene barplot ----
     output$Barplot <- renderPlot({
-      ggplot(
+      plot <- ggplot(
         data = Barplot_data, 
         aes(x = layer, y = expression, fill = source_dataset, 
             group = source_dataset)) +
@@ -319,7 +330,18 @@ server <- function(input, output, session) {
               legend.text = element_text(size = 11),
               plot.title = element_text(size=21)) +
         xlab("\nCortical Layer") + ylab("Expression (log(CPM))")
+      
+      plots$singleGene <- plot
+      print(plot)
     }) 
+    
+    output$downloadBarplot <- downloadHandler(
+      filename = function() { 
+        paste0(selected_gene_list_single, "_barplot", ".png")},
+      content = function(file) {
+        ggsave(file, plot = plots$singleGene, device = "png")
+      }
+    )
     
     # Barplot caption
     output$barplot_caption <- renderPrint({
@@ -447,7 +469,7 @@ server <- function(input, output, session) {
     
     # Heatmap figure
     output$AUC_heatmap <- renderPlot({
-      ggplot(data = AUROC_df, mapping = aes(x = dataset, y = Layer, fill = AUROC)) +
+      plot <- ggplot(data = AUROC_df, mapping = aes(x = dataset, y = Layer, fill = AUROC)) +
         geom_tile() +
         scale_fill_distiller(palette = "RdBu", direction = -1, limits = c(0,1)) +
         scale_y_discrete(expand=c(0,0)) + 
@@ -467,7 +489,18 @@ server <- function(input, output, session) {
               legend.title = element_text(size = 12),
               legend.text = element_text(size = 11),
               legend.key.size = unit(1, 'cm'))
+      plots$AUC_heatmap <- plot
+      print(plot)
     })
+    
+    # Download AUC Heatmap
+    output$downloadAUCHeatmap <- downloadHandler(
+      filename = function() { 
+        paste0("AUC Heatmap", ".png")},
+      content = function(file) {
+        ggsave(file, plot = plots$AUC_heatmap, device = "png")
+      }
+    )
     
     # AUC heatmap figure caption
     output$AUC_heatmap_caption <- renderPrint({
@@ -491,7 +524,7 @@ server <- function(input, output, session) {
       
       # Bulk tissue heatmaps ----
       output$He_figure <- renderPlot({
-        He_heatmap_data %>%
+        plot <- He_heatmap_data %>%
           ggplot(mapping = aes(x = gene_symbol, y = layer, 
                                                      fill = expression)) +
           geom_tile() +
@@ -507,9 +540,11 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$He_figure <- plot
+        print(plot)
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
-        Maynard_heatmap_data %>%
+        plot <- Maynard_heatmap_data %>%
         ggplot(data = Maynard_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
@@ -525,7 +560,27 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$Maynard_figure <- plot
+        print(plot)
       }, height = heatmapHeight)
+      
+      # Download He figure
+      output$downloadHePlot <- downloadHandler(
+        filename = function() { 
+          paste0("He_et_al_heatmap", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$He_figure, device = "png")
+        }
+      )
+      
+      # Download Maynard figure
+      output$downloadMaynardPlot <- downloadHandler(
+        filename = function() { 
+          paste0("Maynard_et_al_heatmap", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$Maynard_figure, device = "png")
+        }
+      )
       
       # Bulk-tissue expression figure caption
       output$bulk_figure_caption <- renderPrint({
@@ -543,7 +598,7 @@ server <- function(input, output, session) {
       
       # Bulk-tissue Scatterplots ----
       output$He_figure <- renderPlot({
-        He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
+        plot <- He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
                                           summarize(median_rank = median(expression)), 
                                         by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
@@ -567,10 +622,12 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plot$He_figure <- plot
+        print(plot)
       }, height = heatmapHeight)
       
       output$Maynard_figure <- renderPlot({
-        Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
+        plot <- Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
                                                group_by(layer) %>% 
                                                summarize(median_rank = median(expression)), 
                                              by = "layer") %>%
@@ -595,7 +652,27 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$Maynard_figure <- plot
+        print(plot)
       }, height = heatmapHeight) 
+      
+      # Download He figure
+      output$downloadHePlot <- downloadHandler(
+        filename = function() { 
+          paste0("He_et_al_scatterplot", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$He_figure, device = "png")
+        }
+      )
+      
+      # Download Maynard figure
+      output$downloadMaynardPlot <- downloadHandler(
+        filename = function() { 
+          paste0("Maynard_et_al_scatterplot", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$Maynard_figure, device = "png")
+        }
+      )
       
       output$bulk_figure_caption <- renderPrint({
         cat(paste("Fig 2. The scatter plots were created using data from He et al 
@@ -618,7 +695,7 @@ server <- function(input, output, session) {
       
       # GABAergic heatmap ----
       output$AIBS_figure_GABA <- renderPlot({
-        ggplot(data = AIBS_GABA_heatmap_data, 
+        plot <- ggplot(data = AIBS_GABA_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
@@ -632,11 +709,21 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_GABA_heatmap <- plot
+        print(plot)
       }, height = heatmapHeight)
+      # Download GABA figure
+      output$downloadAIBSGABAplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_GABA_heatmap", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_GABA_heatmap, device = "png")
+        }
+      )
       
       # Glutamatergic heatmap ----
       output$AIBS_figure_GLUT <- renderPlot({
-        ggplot(data = AIBS_GLUT_heatmap_data, 
+        plot <- ggplot(data = AIBS_GLUT_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
@@ -650,11 +737,21 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_GLUT_heatmap <- plot 
+        print(plot)
       }, height = heatmapHeight)
+      # Download GLUT figure
+      output$downloadAIBSGLUTplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_GLUT_heatmap", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_GLUT_heatmap, device = "png")
+        }
+      )
       
       # Non-neuronal heatmap ----
       output$AIBS_figure_NONN <- renderPlot({
-        ggplot(data = AIBS_NONN_heatmap_data, 
+        plot <- ggplot(data = AIBS_NONN_heatmap_data, 
                mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
@@ -668,7 +765,17 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_NONN_heatmap <- plot
+        print(plot)
       }, height = heatmapHeight)
+      # Download NONN figure
+      output$downloadAIBSNONNplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_NONN_heatmap", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_NONN_heatmap, device = "png")
+        }
+      )
       
       #AIBS heatmap caption
       output$AIBS_figure_caption <- renderPrint({
@@ -693,7 +800,7 @@ server <- function(input, output, session) {
       
       # GABAergic scatterplot ----
       output$AIBS_figure_GABA <- renderPlot({
-        AIBS_GABA_heatmap_data %<>% 
+        plot <- AIBS_GABA_heatmap_data %<>% 
           inner_join(AIBS_GABA_heatmap_data %>% group_by(layer) %>% 
                        summarize(median_rank = median(expression)), 
                                    by = "layer") %>%
@@ -715,11 +822,13 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_GABA_scatterplot <- plot
+        print(plot)
       }, height = heatmapHeight)
       
       # Glutamatergic scatterplot ----
       output$AIBS_figure_GLUT <- renderPlot({
-        AIBS_GLUT_heatmap_data %<>% inner_join(AIBS_GLUT_heatmap_data %>% group_by(layer) %>% 
+        plot <- AIBS_GLUT_heatmap_data %<>% inner_join(AIBS_GLUT_heatmap_data %>% group_by(layer) %>% 
                                      summarize(median_rank = median(expression)), 
                                    by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5",
@@ -740,11 +849,13 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_GLUT_scatterplot <- plot 
+        print(plot)
       }, height = heatmapHeight)
       
       # Non-neuronal scatterplot ----
       output$AIBS_figure_NONN <- renderPlot({
-        AIBS_NONN_heatmap_data %<>% inner_join(AIBS_NONN_heatmap_data 
+        plot <- AIBS_NONN_heatmap_data %<>% inner_join(AIBS_NONN_heatmap_data 
                                                 %>% group_by(layer) %>% 
                                     summarize(median_rank = median(expression)), 
                                   by = "layer") %>%
@@ -766,7 +877,34 @@ server <- function(input, output, session) {
                 legend.title = element_text(size = 12),
                 legend.text = element_text(size = 11),
                 plot.title = element_text(size=17))
+        plots$AIBS_NONN_scatterplot <- plot 
+        print(plot)
       }, height = heatmapHeight)
+      
+      # Download GABA figure
+      output$downloadAIBSGABAplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_GABA_scatterplot", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_GABA_scatterplot, device = "png")
+        }
+      )
+      # Download GLUT figure
+      output$downloadAIBSGLUTplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_GLUT_scatterplot", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_GLUT_scatterplot, device = "png")
+        }
+      )
+      # Download NONN figure
+      output$downloadAIBSNONNplot <- downloadHandler(
+        filename = function() { 
+          paste0("AIBS_NONN_scatterplot", ".png")},
+        content = function(file) {
+          ggsave(file, plot = plots$AIBS_NONN_scatterplot, device = "png")
+        }
+      )
       
       output$AIBS_figure_caption <- renderPrint({
         cat(paste("Fig 3. The scatter plots were created using the scRNA-seq data 
