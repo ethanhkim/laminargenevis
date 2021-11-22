@@ -168,8 +168,10 @@ ui <- fluidPage(
               # Github link
               tags$div(
                 'The code for the application and the analyses used are available on ',
-                tags$a(href = "href = 'https://github.com/ethanhkim/laminargenevis",
+                tags$a(href = "https://github.com/ethanhkim/laminargenevis",
                        "Github."), style = 'font-size:17px')),
+            br(),
+            br(),
             # Single or multiple gene visualizations ----
             tabPanel(
               title = "Gene Visualization", value = "visualization",
@@ -276,7 +278,6 @@ server <- function(input, output, session) {
   output$AIBS_figure_NONN <- NULL
   output$summary_statistics_title <- NULL
   output$summary_markers_title <- NULL
-  output$downloadBarplot <- NULL
   
   # store plots to print from downloadButton
   plots <- reactiveValues()
