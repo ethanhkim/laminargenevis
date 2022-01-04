@@ -113,7 +113,7 @@ ui <- fluidPage(
               h2("Welcome to LaminaRGeneVis!"),
               br(),
               p("This web application allows you to examine layer-specific 
-                 gene expression across the cortex and determine layer
+                 gene expression in the cortex and determine cytoarchitectural
                  annotations.", style='font-size:19px'),
               br(),
               h3("App Workflow:"),
