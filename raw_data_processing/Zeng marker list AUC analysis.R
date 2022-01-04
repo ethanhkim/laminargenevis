@@ -31,9 +31,12 @@ for (i in c("layer 1", "layer 2", "layer 3", "layer 4", "layer 5", "layer 6")) {
 } 
 
 # Verify layer marker count (optional)
-#Zeng_markers %>% 
-#  group_by(cortical_marker_human) %>% 
-#  summarise(n())
+Zeng_marker_count <- Zeng_markers %>% 
+  group_by(cortical_marker_human) %>% 
+  summarise(n()) %>%
+  filter(str_detect(cortical_marker_human, "layer"))
+# Write marker count into csv
+write.csv(Zeng_marker_count, file = "data/processed/Zeng_marker_count.csv")
 
 ## Create AUC tables using Zeng et al marker lists ------
 
