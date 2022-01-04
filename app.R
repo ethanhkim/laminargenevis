@@ -41,7 +41,7 @@ ui <- fluidPage(
   tags$head(
     includeHTML("google-analytics.html"),
     tags$style(
-    HTML("
+      HTML("
           #summary_statistics_single {
               font-family: 
                 'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
@@ -101,7 +101,7 @@ ui <- fluidPage(
               value = 'RELN, CUX2, FOXP2, RASGRF2'),
             # Submit button
             actionButton(inputId = "submit_heatmap", label = "Submit")),
-          ),
+        ),
         # Main page
         mainPanel(
           tabsetPanel(
@@ -115,17 +115,17 @@ ui <- fluidPage(
               p("This web application allows you to examine layer-specific 
                  gene expression across the cortex and determine layer
                  annotations.", style='font-size:19px'),
-               br(),
-               h3("App Workflow:"),
-               p("Here's a quick overview of the app! Multiple datasets of 
+              br(),
+              h3("App Workflow:"),
+              p("Here's a quick overview of the app! Multiple datasets of 
                   RNA-seq expression (described below) have been standardized 
                   for ease of comparison as shown in (A). Users have the option 
                   of choosing to examine either", strong("Single Gene"), "or", 
-                  strong("Multiple Genes")," in the HGNC gene symbol 
+                strong("Multiple Genes")," in the HGNC gene symbol 
                   format. Choosing Single Gene will give you a plot similar 
                   to (B), and choosing Multiple Genes will give you multiple 
                   plots, including the plot shown in (C).", 
-                  style = 'font-size:17px'),
+                style = 'font-size:17px'),
               br(),
               # Figure
               img(src = 'pageFigure.png', 
@@ -141,29 +141,29 @@ ui <- fluidPage(
               tags$ul(
                 # He et al description
                 tags$li(p(a("He et al. (2017):", 
-                             href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
-                             target = "_blank"), 
-                             p("This study assayed the whole genome using
+                            href = "https://pubmed.ncbi.nlm.nih.gov/28414332/", 
+                            target = "_blank"), 
+                          p("This study assayed the whole genome using
                                 high-throughput RNA-seq in samples from the 
                                DLPFC.")), style = 'font-size:17px'),
                 # Maynard et al description
                 tags$li(p(a("Maynard et al. (2021):", 
-                             href = "https://www.nature.com/articles/s41593-020-00787-0", 
-                             target = "_blank"), 
-                             p("This study assayed the whole genome through 
+                            href = "https://www.nature.com/articles/s41593-020-00787-0", 
+                            target = "_blank"), 
+                          p("This study assayed the whole genome through 
                                 the Visium Platform (10X Genomics) in samples 
                                 from the DLPFC.")), style = 'font-size:17px'),
                 # AIBS description
                 tags$li(p(a("Allen Institute for Brain Science (AIBS): 
                              Cell-Type Database", 
-                             href = "https://portal.brain-map.org/atlases-and-data/
+                            href = "https://portal.brain-map.org/atlases-and-data/
                                      rnaseq/human-multiple-cortical-areas-smart-seq", 
-                             target = "_blank"), 
-                             p("This dataset contains multiple cortical regions 
+                            target = "_blank"), 
+                          p("This dataset contains multiple cortical regions 
                                 and assays the whole genome across roughly 
                                 49,000 single-cell nuclei.")), 
-                                style = 'font-size:17px'),
-                ),
+                        style = 'font-size:17px'),
+              ),
               br(),
               # Github link
               tags$div(
@@ -184,7 +184,7 @@ ui <- fluidPage(
                 #Output barplot visualization
                 br(),
                 plotOutput("Barplot") %>% withSpinner(),
-                downloadButton("downloadBarplot", label = "download"),
+                downloadButton("downloadBarplot", label = "Download"),
                 br(),
                 br(),
                 p(textOutput("barplot_caption"),style='font-size:15px'),
@@ -208,15 +208,15 @@ ui <- fluidPage(
                 h4(textOutput('AUC_heatmap_title')),
                 plotOutput("AUC_heatmap") %>% withSpinner(),
                 p(textOutput("AUC_heatmap_caption"),style='font-size:15px'),
-                downloadButton("downloadAUCHeatmap", label = "download"),
+                downloadButton("downloadAUCHeatmap", label = "Download"),
                 br(),
                 #Output heatmap visualizations for bulk tissue RNA-seq
                 h4(textOutput('bulk_figure_title')),
                 br(),
                 plotOutput("He_figure", height = "auto") %>% withSpinner(),
-                downloadButton("downloadHePlot", label = "download"),
+                downloadButton("downloadHePlot", label = "Download"),
                 plotOutput("Maynard_figure", height = "auto") %>% withSpinner(),
-                downloadButton("downloadMaynardPlot", label = "download"),
+                downloadButton("downloadMaynardPlot", label = "Download"),
                 br(),
                 p(textOutput("bulk_figure_caption"),style='font-size:15px'),
                 br(),
@@ -224,11 +224,11 @@ ui <- fluidPage(
                 h4(textOutput('AIBS_figure_title')),
                 br(),
                 plotOutput("AIBS_figure_GABA", height = "auto") %>% withSpinner(),
-                downloadButton("downloadAIBSGABAplot", label = "download"),
+                downloadButton("downloadAIBSGABAplot", label = "Download"),
                 plotOutput("AIBS_figure_GLUT", height = "auto") %>% withSpinner(),
-                downloadButton("downloadAIBSGLUTplot", label = "download"),
+                downloadButton("downloadAIBSGLUTplot", label = "Download"),
                 plotOutput("AIBS_figure_NONN", height = "auto") %>% withSpinner(),
-                downloadButton("downloadAIBSNONNplot", label = "download"),
+                downloadButton("downloadAIBSNONNplot", label = "Download"),
                 p(textOutput("AIBS_figure_caption"),style='font-size:15px'),
                 br(),
                 h4(textOutput('summary_statistics_multiple_title')),
@@ -295,6 +295,7 @@ server <- function(input, output, session) {
       He_dataset = He_DS1_logCPM_dataset, 
       Maynard_dataset = Maynard_logCPM_dataset,
       Allen_dataset = Allen_downsampled_logCPM_dataset)
+    Barplot_data %<>% mutate(expression_CPM = 2**expression)
     
     # Layer marker for input gene
     He_layer_marker <- separate_layers(
@@ -310,11 +311,10 @@ server <- function(input, output, session) {
     output$Barplot <- renderPlot({
       plot <- ggplot(
         data = Barplot_data, 
-        aes(x = layer, y = expression, fill = source_dataset, 
+        aes(x = layer, y = expression_CPM+1, fill = source_dataset, 
             group = source_dataset)) +
         geom_bar(stat = "identity", position = "dodge", width = 0.75) + 
-        ggtitle(paste0('Expression of ', selected_gene_list_single, 
-                       ' across the human neocortex')) +
+        #ggtitle(paste0('Expression of ', selected_gene_list_single)) +
         theme_bw() + 
         scale_fill_discrete(
           name="Source Dataset", 
@@ -323,6 +323,9 @@ server <- function(input, output, session) {
           labels=c("He (DLPFC)", "Maynard (DLPFC)", "AIBS: GABA (MTG)", 
                    "AIBS: GLUT (MTG)", "AIBS: Non-neuron (MTG)")) +
         scale_x_discrete(name = "\nCortical Layer") +
+        scale_y_continuous(trans='log2', labels = function(y) {y-1}, #log2 the axis and not the data
+                           expand = expansion(mult = c(0, .1)), 
+                           breaks = 1+2**round(seq(min(Barplot_data$expression,na.rm = T), max(Barplot_data$expression,na.rm = T), by = 2))) +
         theme(axis.text.x = element_text(size = 13), 
               axis.text.y = element_text(size = 13),
               axis.title.x = element_text(size = 17),
@@ -330,8 +333,7 @@ server <- function(input, output, session) {
               legend.title = element_text(size = 12),
               legend.text = element_text(size = 11),
               plot.title = element_text(size=21)) +
-        xlab("\nCortical Layer") + ylab("Expression (log(CPM))")
-      
+        xlab("\nCortical Layer") + ylab(paste0(selected_gene_list_single, " expression (CPM)"))
       plots$singleGene <- plot
       print(plot)
     }) 
@@ -346,10 +348,10 @@ server <- function(input, output, session) {
     
     # Barplot caption
     output$barplot_caption <- renderPrint({
-      cat(paste("Fig 1. The barplots were created using data from He et al, 
-                Maynard et al and the Allen Institute for Brain Science (AIBS). 
+      cat(paste("Fig 1. The barplots were created using data from He et al., 
+                Maynard et al., and the Allen Institute for Brain Science (AIBS). 
                 Raw RNA-seq data was processed and normalized through counts 
-                per million (CPM) and log2-transformed."))
+                per million (CPM)."))
     })
     
     #Filter for selected genes from table containing Zeng et al layer marker annotations
@@ -433,7 +435,7 @@ server <- function(input, output, session) {
     AIBS_NONN_heatmap_data <- process_heatmap_data(
       source = "Allen", source_dataset = Allen_downsampled_logCPM_filtered_dataset,
       input_genelist = selected_gene_list_multiple, cell_type = "Non-neuronal")
-
+    
     He_layer_marker <- separate_layers(layer_marker_lookup_tbl, 
                                        selected_gene_list_multiple,
                                        "He")
@@ -527,7 +529,7 @@ server <- function(input, output, session) {
       output$He_figure <- renderPlot({
         plot <- He_heatmap_data %>%
           ggplot(mapping = aes(x = gene_symbol, y = layer, 
-                                                     fill = expression)) +
+                               fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
@@ -546,8 +548,8 @@ server <- function(input, output, session) {
       }, height = heatmapHeight)
       output$Maynard_figure <- renderPlot({
         plot <- Maynard_heatmap_data %>%
-        ggplot(data = Maynard_heatmap_data, 
-               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
+          ggplot(data = Maynard_heatmap_data, 
+                 mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + 
@@ -600,8 +602,8 @@ server <- function(input, output, session) {
       # Bulk-tissue Scatterplots ----
       output$He_figure <- renderPlot({
         plot <- He_heatmap_data %<>% inner_join(He_heatmap_data %>% group_by(layer) %>% 
-                                          summarize(median_rank = median(expression)), 
-                                        by = "layer") %>%
+                                                  summarize(median_rank = median(expression)), 
+                                                by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
@@ -629,9 +631,9 @@ server <- function(input, output, session) {
       
       output$Maynard_figure <- renderPlot({
         plot <- Maynard_heatmap_data %<>% inner_join(Maynard_heatmap_data %>% 
-                                               group_by(layer) %>% 
-                                               summarize(median_rank = median(expression)), 
-                                             by = "layer") %>%
+                                                       group_by(layer) %>% 
+                                                       summarize(median_rank = median(expression)), 
+                                                     by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, names = gene_symbol, 
@@ -697,7 +699,7 @@ server <- function(input, output, session) {
       # GABAergic heatmap ----
       output$AIBS_figure_GABA <- renderPlot({
         plot <- ggplot(data = AIBS_GABA_heatmap_data, 
-               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
+                       mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -725,7 +727,7 @@ server <- function(input, output, session) {
       # Glutamatergic heatmap ----
       output$AIBS_figure_GLUT <- renderPlot({
         plot <- ggplot(data = AIBS_GLUT_heatmap_data, 
-               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
+                       mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -753,7 +755,7 @@ server <- function(input, output, session) {
       # Non-neuronal heatmap ----
       output$AIBS_figure_NONN <- renderPlot({
         plot <- ggplot(data = AIBS_NONN_heatmap_data, 
-               mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
+                       mapping = aes(x = gene_symbol, y = layer, fill = expression)) +
           geom_tile() +
           scale_fill_distiller(palette = "RdYlBu", limits = c(-3, 3)) +
           scale_y_discrete(expand=c(0,0)) + scale_x_discrete(expand=c(0,0)) +
@@ -790,7 +792,7 @@ server <- function(input, output, session) {
                    provided by AIBS."))
       })
       
-    # AIBS scatterplots ----
+      # AIBS scatterplots ----
       
     } else {
       
@@ -804,7 +806,7 @@ server <- function(input, output, session) {
         plot <- AIBS_GABA_heatmap_data %<>% 
           inner_join(AIBS_GABA_heatmap_data %>% group_by(layer) %>% 
                        summarize(median_rank = median(expression)), 
-                                   by = "layer") %>%
+                     by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, 
@@ -830,8 +832,8 @@ server <- function(input, output, session) {
       # Glutamatergic scatterplot ----
       output$AIBS_figure_GLUT <- renderPlot({
         plot <- AIBS_GLUT_heatmap_data %<>% inner_join(AIBS_GLUT_heatmap_data %>% group_by(layer) %>% 
-                                     summarize(median_rank = median(expression)), 
-                                   by = "layer") %>%
+                                                         summarize(median_rank = median(expression)), 
+                                                       by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5",
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, 
@@ -857,9 +859,9 @@ server <- function(input, output, session) {
       # Non-neuronal scatterplot ----
       output$AIBS_figure_NONN <- renderPlot({
         plot <- AIBS_NONN_heatmap_data %<>% inner_join(AIBS_NONN_heatmap_data 
-                                                %>% group_by(layer) %>% 
-                                    summarize(median_rank = median(expression)), 
-                                  by = "layer") %>%
+                                                       %>% group_by(layer) %>% 
+                                                         summarize(median_rank = median(expression)), 
+                                                       by = "layer") %>%
           mutate(layer = factor(layer, levels = c("L1", "L2", "L3", "L4", "L5", 
                                                   "L6", "WM"))) %>%
           ggplot(aes(x = layer, y = expression, group = layer, 
