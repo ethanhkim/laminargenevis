@@ -16,7 +16,7 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("slice", "dplyr")
 
 ## He Layer markers ##
-He_LM_Path <- here("Data", "raw_data", "He et al", "Supplementary Table 2.xlsx")
+He_LM_Path <- here("Data", "raw", "He et al", "Supplementary Table 2.xlsx")
 He_layer_markers <- read_xlsx(path = He_LM_Path) %>%
   select("Gene symbol", "Layer marker in human") %>%
   mutate_at(vars("Layer marker in human"), na_if, "No") %>%
@@ -53,7 +53,7 @@ Maynard_layer_markers <- as_tibble(modeling_results$enrichment) %>%
 
 ## Zeng (Allen) layer markers ##
 
-Zeng_Path <- here("Data", "raw_data", "Zeng et al", "Table S2.xlsx")
+Zeng_Path <- here("Data", "raw", "Zeng et al", "Table S2.xlsx")
 Zeng_dataset <- read_xlsx(path = Zeng_Path, sheet = "Final1000New", skip=1) %>%
   select("Gene symbol", "Entrez Gene ID", "Cortical marker (human)", "Level...20", "Pattern...21",
          "Pattern...23", "Pattern...25") %>% 
