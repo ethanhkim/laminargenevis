@@ -144,7 +144,7 @@ auc_summary <- ggplot(data =summary_AUC,
   scale_y_discrete(expand=c(0,0)) + 
   scale_x_discrete(expand=c(0,0)) + 
   labs(x = "Zeng et al. Input Markers", y = "LaminaRGeneVis", fill = "Average\nAUC") +
-  theme(axis.text.x = element_text(size = 13, hjust = 0.95),
+  theme(axis.text.x = element_text(size = 13),
         axis.text.y = element_text(size = 13),
         axis.title.x = element_text(size = 17),
         axis.title.y = element_text(size = 17),
@@ -157,5 +157,5 @@ auc_summary
 ggsave(
   filename = here("figures", "Figure_3_Zeng_summary_AUC.pdf"),
   plot = auc_summary,
-  width = 7, height = 6.5
+  width = 6, height = 5.5
 )
